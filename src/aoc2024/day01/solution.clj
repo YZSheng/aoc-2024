@@ -33,5 +33,15 @@
        transpose
        (map (fn [[a b]] (Math/abs (- a b))))
        (reduce +)))
-    
+
 (solve (read-lines-of-numbers "resources/day01/input.txt"))
+
+(defn solve2 [input]
+  (let [[a b] (->> input
+                   (map #(str/split % #"\s+"))
+                   (map (fn [x] (map #(Integer/parseInt %) x)))
+                   transpose)
+        freq (frequencies b)]
+    (reduce + (map (fn [x] (* x (get freq x 0))) a))))
+
+(solve2 (read-lines-of-numbers "resources/day01/input.txt"))
