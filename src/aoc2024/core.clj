@@ -6,3 +6,5 @@
        slurp
        str/split-lines))
 
+(defn read-single-line [input]
+  (slurp input))
