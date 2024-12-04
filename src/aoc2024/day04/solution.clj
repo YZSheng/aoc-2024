@@ -14,11 +14,8 @@ SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX")
 
-sample-input
-
 (def char-map (->> (str/split-lines sample-input)
                    (map (fn [x] (str/split x #"")))))
-
 char-map
 
 (defn check-coord [x y m deltas]
