@@ -40,16 +40,20 @@ char-map
          (filter #(check-coord x y m %))
          count)))
 
+(defn find-coord-for-char [char char-map]
+  (for [x (range (count (first char-map)))
+        y (range (count char-map))
+        :when (= char (get-in char-map [x y]))]
+    [x y]))
+
+
 (defn solve1 [input]
   (let [char-map (mapv #(vec (str/split % #"")) input)]
-    (->> (for [x (range (count (first char-map)))
-               y (range (count char-map))
-               :when (= "X" (get-in char-map [x y]))]
-           [x y])
+    (->> (find-coord-for-char "X" char-map)
          (map (fn [[x y]] (find-xmas x y char-map)))
          (reduce +))))
-(solve1 (str/split-lines sample-input))
 
+(solve1 (str/split-lines sample-input))
 (solve1 (str/split-lines (read-single-line "resources/day04/input.txt")))
 
 ;; part 2
@@ -92,11 +96,8 @@ char-map
        (count)))
 
 (defn solve2 [input]
-  (let [char-map (map (fn [x] (str/split x #"")) input)]
-    (->> (for [x (range (count (first char-map)))
-               y (range (count char-map))
-               :when (= "A" (get-in (vec char-map) [x y]))]
-           [x y])
+  (let [char-map (mapv #(vec (str/split % #"")) input)]
+    (->> (find-coord-for-char "A" char-map)
          (map (fn [[x y]] (find-x-mas x y (vec char-map))))
          (reduce +))))
 
