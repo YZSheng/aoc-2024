@@ -1,7 +1,6 @@
 (ns aoc2024.day04.solution
   (:require
-   [aoc2024.core :refer [read-single-line]]
-   [clojure.string :as str]))
+   [aoc2024.core :refer [read-char-map]]))
 
 (def sample-input "MMMSXXMASM
 MSAMXMSMSA
@@ -14,8 +13,7 @@ SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX")
 
-(def char-map (->> (str/split-lines sample-input)
-                   (map (fn [x] (str/split x #"")))))
+(def char-map (read-char-map sample-input))
 char-map
 
 (defn check-coord [x y m deltas]
@@ -45,13 +43,13 @@ char-map
 
 
 (defn solve1 [input]
-  (let [char-map (mapv #(vec (str/split % #"")) input)]
+  (let [char-map (read-char-map input)]
     (->> (find-coord-for-char "X" char-map)
          (map (fn [[x y]] (find-xmas x y char-map)))
          (reduce +))))
 
-(solve1 (str/split-lines sample-input))
-(solve1 (str/split-lines (read-single-line "resources/day04/input.txt")))
+(solve1 sample-input)
+(solve1 (slurp "resources/day04/input.txt"))
 
 ;; part 2
 
@@ -93,10 +91,10 @@ char-map
        (count)))
 
 (defn solve2 [input]
-  (let [char-map (mapv #(vec (str/split % #"")) input)]
+  (let [char-map (read-char-map input)]
     (->> (find-coord-for-char "A" char-map)
          (map (fn [[x y]] (find-x-mas x y (vec char-map))))
          (reduce +))))
 
-(solve2 (str/split-lines sample-input))
-(solve2 (str/split-lines (read-single-line "resources/day04/input.txt")))
+(solve2 sample-input)
+(solve2 (slurp "resources/day04/input.txt"))
