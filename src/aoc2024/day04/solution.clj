@@ -1,4 +1,4 @@
-(ns aoc2024.day04.solution 
+(ns aoc2024.day04.solution
   (:require
    [aoc2024.core :refer [read-single-line]]
    [clojure.string :as str]))
@@ -13,7 +13,6 @@ SMSMSASXSS
 SAXAMASAAA
 MAMMMXMMMM
 MXMXAXMASX")
-
 
 sample-input
 
@@ -78,19 +77,6 @@ char-map
    (= "A" (get-in m [(- x 2) (- y 2)]))
    (= "S" (get-in m [(- x 3) (- y 3)]))))
 
-
-(get-in [[1 2] [3 4]] [-1 -1])
-
-(count (first char-map))
-
-(get-in (vec char-map) [0 0])
-
-(count (for [x (range (count (first char-map)))
-             y (range (count char-map))
-             :when (= "X" (get-in (vec char-map) [x y]))]
-         [x y]))
-
-
 (defn find-xmas [x y m]
   (->> [check-coord-up
         check-coord-down
@@ -104,7 +90,6 @@ char-map
                  (f x y m)))
        count))
 
-
 (defn solve1 [input]
   (let [char-map (map (fn [x] (str/split x #"")) input)]
     (->> (for [x (range (count (first char-map)))
@@ -117,3 +102,54 @@ char-map
 (solve1 (str/split-lines sample-input))
 
 (solve1 (str/split-lines (read-single-line "resources/day04/input.txt")))
+
+;; part 2
+
+(defn check-mmss [x y m]
+  (and
+   (= "M" (get-in m [(- x 1) (- y 1)])
+      (get-in m [(- x 1) (+ y 1)]))
+   (= "S" (get-in m [(+ x 1) (+ y 1)])
+      (get-in m [(+ x 1) (- y 1)]))))
+
+(defn check-smms [x y m]
+  (and
+   (= "M" (get-in m [(- x 1) (+ y 1)])
+      (get-in m [(+ x 1) (+ y 1)]))
+   (= "S" (get-in m [(+ x 1) (- y 1)])
+      (get-in m [(- x 1) (- y 1)]))))
+
+(defn check-ssmm [x y m]
+  (and
+   (= "S" (get-in m [(- x 1) (- y 1)])
+      (get-in m [(- x 1) (+ y 1)]))
+   (= "M" (get-in m [(+ x 1) (+ y 1)])
+      (get-in m [(+ x 1) (- y 1)]))))
+
+(defn check-mssm [x y m]
+  (and
+   (= "S" (get-in m [(- x 1) (+ y 1)])
+      (get-in m [(+ x 1) (+ y 1)]))
+   (= "M" (get-in m [(+ x 1) (- y 1)])
+      (get-in m [(- x 1) (- y 1)]))))
+
+(defn find-x-mas [x y m]
+  (->> [check-mmss
+        check-smms
+        check-ssmm
+        check-mssm]
+       (filter (fn [f]
+                 (f x y m)))
+       (count)))
+
+(defn solve2 [input]
+  (let [char-map (map (fn [x] (str/split x #"")) input)]
+    (->> (for [x (range (count (first char-map)))
+               y (range (count char-map))
+               :when (= "A" (get-in (vec char-map) [x y]))]
+           [x y])
+         (map (fn [[x y]] (find-x-mas x y (vec char-map))))
+         (reduce +))))
+
+(solve2 (str/split-lines sample-input))
+(solve2 (str/split-lines (read-single-line "resources/day04/input.txt")))
