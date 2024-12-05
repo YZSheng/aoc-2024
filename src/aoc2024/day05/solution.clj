@@ -106,7 +106,7 @@ sample-input
                    (count (get-in graph [a :in] #{})))
         b-score (- (count (get-in graph [b :out] #{}))
                    (count (get-in graph [b :in] #{})))]
-    (compare b-score a-score))) 
+    (compare b-score a-score)))
 
 (defn sort-by-rules [pages rules]
   (let [graph (build-graph pages rules)]
@@ -122,7 +122,7 @@ sample-input
   (let [[rules pages] (parse-input input)]
     (->> pages
          (filter (fn [page] (not (check-page-by-rules page rules))))
-         (map (fn [page] (flatten (sort-by-rules page rules))))
+         (map (fn [page] (sort-by-rules page rules)))
          (map middle-value)
          (reduce +))))
 
