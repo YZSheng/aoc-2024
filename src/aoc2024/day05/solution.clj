@@ -90,10 +90,10 @@ sample-input
 
 (defn build-graph [pages rules]
   (let [pages-set (set pages)
-        rele vant-rules (filter (fn [[a b]]
-                                  (and (contains? pages-set a)
-                                       (contains? pages-set b)))
-                                rules)]
+        relevant-rules (filter (fn [[a b]]
+                                 (and (contains? pages-set a)
+                                      (contains? pages-set b)))
+                               rules)]
     (reduce (fn [acc [from to]]
               (-> acc
                   (update-in [from :out] (fnil conj #{}) to)

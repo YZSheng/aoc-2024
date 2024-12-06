@@ -83,67 +83,56 @@
     ">" [(inc x) y]
     "v" [x (inc y)]))
 
-(defn turn-right [dir]
-  (case dir
-    "^" ">"
-    ">" "v"
-    "v" "<"
-    "<" "^"))
-
 (defn valid-pos? [grid pos]
   (and (>= (first pos) 0)
        (>= (second pos) 0)
        (< (first pos) (count grid))
        (< (second pos) (count (first grid)))))
 
-(defn will-run-forever? [grid start-pos start-dir obstruction max-steps]
-  (loop [pos start-pos
-         dir start-dir
-         steps 0]
-    (if (> steps max-steps)
-      true
+(defn walk [grid start-pos start-dir obstacle]
+  (let [next-dir {"^" ">"
+                  ">" "v"
+                  "v" "<"
+                  "<" "^"}]
+    (loop [pos start-pos
+           dir start-dir
+           seen #{pos}
+           seen-with-dir #{[pos dir]}]
       (let [next-pos (get-next-pos pos dir)]
         (cond
+          ;; Loop detected - position+direction already seen
+          (seen-with-dir [next-pos dir])
+          #{}
+          
+          ;; Out of bounds - return visited positions
           (not (valid-pos? grid next-pos))
-          false
-
-          (= next-pos obstruction)
-          (recur pos (turn-right dir) (inc steps))
-
-          (= "#" (get-in grid (reverse next-pos)))  ; Hit existing wall
-          (recur pos (turn-right dir) (inc steps))
-
+          seen
+          
+          ;; Hit wall or obstacle - turn right and continue
+          (or (= "#" (get-in grid (reverse next-pos)))
+              (= next-pos obstacle))
+          (recur pos 
+                 (next-dir dir)
+                 seen
+                 (conj seen-with-dir [pos (next-dir dir)]))
+          
+          ;; Move forward
           :else
-          (recur next-pos dir (inc steps)))))))
+          (recur next-pos
+                 dir
+                 (conj seen next-pos)
+                 (conj seen-with-dir [next-pos dir])))))))
 
 (defn place-obstructions [input]
   (let [grid (parse-input input)
-        [x y direction] (find-guard input)]
-    (loop [[x y] [x y]
-           direction direction
-           visited-with-direction #{[[x y] direction]}
-           obstructions #{}]
-      (if (not (valid-pos? grid (get-next-pos [x y] direction)))
-        obstructions
-        (let [next-position (get-next-pos [x y] direction)
-              char-in-next-position (get-in grid (reverse next-position))]
-          (if (= "#" char-in-next-position)
-            (recur [x y]
-                   (turn-right direction)
-                   (conj visited-with-direction [[x y] (turn-right direction)])
-                   obstructions)
-            (let [should-obstruct? (and (not= "#" char-in-next-position)
-                                        (will-run-forever? grid
-                                                           [x y]
-                                                           direction
-                                                           next-position
-                                                           10000))]
-              (recur next-position
-                     direction
-                     (conj visited-with-direction [next-position direction])
-                     (if should-obstruct?
-                       (conj obstructions next-position)
-                       obstructions)))))))))
+        [x y direction] (find-guard input)
+        ;; First get all points visited in normal walk
+        initial-points (walk grid [x y] direction nil)]
+    (->> initial-points
+         (filter #(not= [x y] %))  ; exclude start position
+         (filter #(not= "#" (get-in grid (reverse %))))  ; exclude walls
+         (filter #(empty? (walk grid [x y] direction %)))  ; only keep points that create loops
+         set)))
 ;; Test it
 (count (place-obstructions sample-input))
 (count (place-obstructions (slurp "resources/day06/input.txt")))
