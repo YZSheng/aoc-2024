@@ -100,15 +100,12 @@
            seen-with-dir #{[pos dir]}]
       (let [next-pos (get-next-pos pos dir)]
         (cond
-          ;; Loop detected - position+direction already seen
           (seen-with-dir [next-pos dir])
           #{}
           
-          ;; Out of bounds - return visited positions
           (not (valid-pos? grid next-pos))
           seen
           
-          ;; Hit wall or obstacle - turn right and continue
           (or (= "#" (get-in grid (reverse next-pos)))
               (= next-pos obstacle))
           (recur pos 
@@ -116,7 +113,6 @@
                  seen
                  (conj seen-with-dir [pos (next-dir dir)]))
           
-          ;; Move forward
           :else
           (recur next-pos
                  dir
@@ -126,13 +122,12 @@
 (defn place-obstructions [input]
   (let [grid (parse-input input)
         [x y direction] (find-guard input)
-        ;; First get all points visited in normal walk
         initial-points (walk grid [x y] direction nil)]
     (->> initial-points
-         (filter #(not= [x y] %))  ; exclude start position
-         (filter #(not= "#" (get-in grid (reverse %))))  ; exclude walls
-         (filter #(empty? (walk grid [x y] direction %)))  ; only keep points that create loops
+         (filter #(not= [x y] %))  
+         (filter #(not= "#" (get-in grid (reverse %))))  
+         (filter #(empty? (walk grid [x y] direction %)))
          set)))
-;; Test it
+
 (count (place-obstructions sample-input))
 (count (place-obstructions (slurp "resources/day06/input.txt")))
