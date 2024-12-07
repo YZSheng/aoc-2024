@@ -16,61 +16,37 @@
        (map #(re-seq #"\d+" %))
        (map (fn [xs] (map #(Long/parseLong %) xs)))))
 
-(parse-input sample-input)
-
 (defn evaluation-candidates [first-number rest-numbers f]
   (concat [first-number]
           (vector (f (first rest-numbers) (second rest-numbers)))
           (rest (rest rest-numbers))))
 
-(defn evaluate-result [numbers]
+(defn evaluate-result [numbers fns]
   (let [first-number (first numbers)
         rest-numbers (rest numbers)]
     (if (= 2 (count numbers))
       (= first-number (second numbers))
-      (let [fns [* +]
-            partial-evaluation-candidates (partial evaluation-candidates first-number rest-numbers)]
-        (some #(evaluate-result %) (map #(partial-evaluation-candidates %) fns))))))
+      (let [partial-evaluation-candidates (partial evaluation-candidates first-number rest-numbers)]
+        (some #(evaluate-result % fns) (map #(partial-evaluation-candidates %) fns))))))
 
-(evaluate-result '(190 10 19))
-(evaluate-result '(3267 81 40 27))
-
-(defn solve1 [input]
+(defn solve [input fns]
   (->> (parse-input input)
-       (filter evaluate-result)
+       (filter #(evaluate-result % fns))
        (map first)
        (reduce +)))
 
+(defn solve1 [input]
+  (solve input [* +]))
+
 (solve1 sample-input)
-
 (solve1 (slurp "resources/day07/input.txt"))
-
-;; part 2
 
 (defn merge-numbers [a b]
   (Long/parseLong (str a b)))
 
-(defn evaluate-result-2 [numbers]
-  (let [first-number (first numbers)
-        rest-numbers (rest numbers)]
-    (if (= 2 (count numbers))
-      (= first-number (second numbers))
-      (or (evaluate-result-2 (concat [first-number]
-                                     (vector (* (first rest-numbers) (second rest-numbers)))
-                                     (rest (rest rest-numbers))))
-          (evaluate-result-2 (concat [first-number]
-                                     (vector (+ (first rest-numbers) (second rest-numbers)))
-                                     (rest (rest rest-numbers))))
-          (evaluate-result-2 (concat [first-number]
-                                     (vector (merge-numbers (first rest-numbers) (second rest-numbers)))
-                                     (rest (rest rest-numbers))))))))
-
+;; part 2
 (defn solve2 [input]
-  (->> (parse-input input)
-       (filter evaluate-result-2)
-       (map first)
-       (reduce +)))
+  (solve input [* + merge-numbers]))
 
 (solve2 sample-input)
-
 (solve2 (slurp "resources/day07/input.txt"))
