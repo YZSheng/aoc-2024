@@ -14,7 +14,7 @@
 (defn parse-input [input]
   (->> (str/split-lines input)
        (map #(re-seq #"\d+" %))
-       (map (fn [xs] (map #(Long/parseLong %) xs)))))
+       (map (fn [s] (map #(Long/parseLong %) s)))))
 
 (defn evaluation-candidates [first-number rest-numbers f]
   (concat [first-number]
