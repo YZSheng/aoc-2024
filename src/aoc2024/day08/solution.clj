@@ -66,8 +66,7 @@
                 (map get-next-antenna (all-combinations positions))))
          (apply concat)
          (distinct)
-         (filter (fn [antenna]
-                   (is-in-bounds? parsed-input antenna)))
+         (filter (partial is-in-bounds? parsed-input))
          count)))
 
 (solve1 sample-input)
@@ -92,8 +91,7 @@
         frequency-positions (map :position frequencies)]
     (->> grouped
          vals
-         (map (fn [positions]
-                (find-antennas-for-positions parsed-input positions)))
+         (map (partial find-antennas-for-positions parsed-input))
          (apply concat frequency-positions)
          distinct
          count)))
