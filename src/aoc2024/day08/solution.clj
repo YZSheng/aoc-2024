@@ -56,7 +56,7 @@
         (recur (conj result next-antenna) (inc multiplier))
         result))))
 
-(defn calculate-antennas [input]
+(defn solve1 [input]
   (let [parsed-input (parse-input input)
         frequencies (find-frequencies input)
         grouped (group-positions-by-frequency frequencies)]
@@ -70,9 +70,9 @@
                    (is-in-bounds? parsed-input antenna)))
          count)))
 
-(calculate-antennas sample-input)
+(solve1 sample-input)
 
-(calculate-antennas (slurp "resources/day08/input.txt"))
+(solve1 (slurp "resources/day08/input.txt"))
 
 
 ;; part 2
