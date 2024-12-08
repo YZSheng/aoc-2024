@@ -56,7 +56,6 @@
         (recur (conj result next-antenna) (inc multiplier))
         result))))
 
-
 (defn calculate-antennas [input]
   (let [parsed-input (parse-input input)
         frequencies (find-frequencies input)
