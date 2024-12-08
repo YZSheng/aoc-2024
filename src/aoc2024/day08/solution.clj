@@ -18,8 +18,6 @@
 (defn parse-input [input]
   (mapv #(str/split % #"") (str/split-lines input)))
 
-(parse-input sample-input)
-
 (defn find-frequencies [input]
   (let [parsed-input (parse-input input)]
     (for [x (range 0 (count parsed-input))
@@ -41,18 +39,9 @@
         :when (not= x y)]
     [x y]))
 
-
-
-(find-frequencies sample-input)
-(group-positions-by-frequency (find-frequencies sample-input))
-
-(all-combinations [[1 8] [2 5] [3 7] [4 4]])
-
 (defn get-next-antenna [[[x1 y1] [x2 y2]]]
   [(+ x2 (- x2 x1))
    (+ y2 (- y2 y1))])
-
-(map get-next-antenna (all-combinations [[1 8] [2 5] [3 7] [4 4]]))
 
 (defn is-in-bounds? [parsed-input [x y]]
   (and (< -1 x (count parsed-input))
@@ -67,9 +56,6 @@
         (recur (conj result next-antenna) (inc multiplier))
         result))))
 
-(get-all-antennas (parse-input sample-input) [[1 8] [2 5]])
-(get-all-antennas (parse-input sample-input) [[1 1] [2 2]])
-(get-all-antennas (parse-input sample-input) [[2 2] [1 1]])
 
 (defn calculate-antennas [input]
   (let [parsed-input (parse-input input)
@@ -100,9 +86,7 @@
          (apply concat)
          distinct)))
 
-(find-antennas-for-positions (parse-input sample-input) [[1 8] [2 5] [3 7] [4 4]])
-
-(defn calculate-antennas-2 [input]
+(defn solve2 [input]
   (let [parsed-input (parse-input input)
         frequencies (find-frequencies input)
         grouped (group-positions-by-frequency frequencies)
@@ -115,22 +99,6 @@
          distinct
          count)))
 
+(solve2 sample-input)
 
-(map :position (find-frequencies sample-input))
-
-(calculate-antennas-2 sample-input)
-
-(calculate-antennas-2 (slurp "resources/day08/input.txt"))
-
-(def test-input "T.........
-...T......
-.T........
-..........
-..........
-..........
-..........
-..........
-..........
-..........")
-
-(calculate-antennas-2 test-input)
+(solve2 (slurp "resources/day08/input.txt"))
