@@ -57,15 +57,11 @@
                      nil-idx-pointer
                      (dec current-idx)))))))))
 
-(swap-with-first-nil [0 0 nil nil nil 1 1 1 nil nil nil 2 nil nil nil 3 3 3 nil 4 4 nil 5 5 5 5 nil 6 6 6 6 nil 7 7 7 nil 8 8 8 8 9 9])
-
 (defn calculate-check-sum [l]
   (->> l
        (filter identity)
        (map-indexed (fn [idx elem] (* elem idx)))
        (reduce +)))
-
-(calculate-check-sum (swap-with-first-nil [0 0 nil nil nil 1 1 1 nil nil nil 2 nil nil nil 3 3 3 nil 4 4 nil 5 5 5 5 nil 6 6 6 6 nil 7 7 7 nil 8 8 8 8 9 9]))
 
 (defn solve1 [input]
   (->> input
@@ -76,14 +72,19 @@
 (solve1 sample-input)
 (solve1 (slurp "resources/day09/input.txt"))
 
-(->> sample-input
-     translate-input)
+(comment
+
+  (swap-with-first-nil [0 0 nil nil nil 1 1 1 nil nil nil 2 nil nil nil 3 3 3 nil 4 4 nil 5 5 5 5 nil 6 6 6 6 nil 7 7 7 nil 8 8 8 8 9 9])
+
+  (calculate-check-sum (swap-with-first-nil [0 0 nil nil nil 1 1 1 nil nil nil 2 nil nil nil 3 3 3 nil 4 4 nil 5 5 5 5 nil 6 6 6 6 nil 7 7 7 nil 8 8 8 8 9 9]))
+
+  (->> sample-input
+       translate-input))
 
 ;; part 2
 
-
 (defn get-block-size [v idx]
-  (let [val (get v idx)]  ;; Define val from the vector at idx
+  (let [val (get v idx)]
     (loop [size 1
            i (dec idx)]
       (if (and (>= i 0) (= (get v i) val))
@@ -102,35 +103,37 @@
           (let [size (get-block-size v idx)]
             (recur (- idx size) (conj blocks [idx size val]))))))))
 
+
+(defn find-first-fit [result block-start block-size]
+  (loop [pos 0]
+    (when (< pos block-start)
+      (if (and (nil? (get result pos))
+               (every? nil? (take block-size (subvec result pos))))
+        pos
+        (recur (inc pos))))))
+
+(defn update-positions-to-nils [coll start end]
+  (reduce #(assoc %1 %2 nil) coll (range start (inc end))))
+
+(defn update-nils-to-values [coll start size value]
+  (reduce #(assoc %1 %2 value) coll (range start (+ start size))))
+
 (defn swap-with-first-nil-in-block [coll]
   (let [v (vec coll)
-        ;; Find blocks and their sizes
         blocks (find-blocks v)]
-    (println blocks)
     (loop [result v
            remaining-blocks blocks]
       (if (empty? remaining-blocks)
         result
         (let [[block-end block-size block-val] (first remaining-blocks)
               block-start (- block-end (dec block-size))
-              ;; Find first position with enough consecutive nils
-              first-fit (loop [pos 0]
-                          (when (< pos block-start)
-                            (if (and (nil? (get result pos))
-                                     (every? nil? (take block-size (subvec result pos))))
-                              pos
-                              (recur (inc pos)))))]
+              first-fit (find-first-fit result block-start block-size)]
           (if first-fit
             (recur (-> result
-                      ;; Clear original position
-                       (as-> r (reduce #(assoc %1 %2 nil) r (range block-start (inc block-end))))
-                      ;; Place at new position
-                       (as-> r (reduce #(assoc %1 %2 block-val) r (range first-fit (+ first-fit block-size)))))
+                       (update-positions-to-nils block-start block-end)
+                       (update-nils-to-values first-fit block-size block-val))
                    (rest remaining-blocks))
             (recur result (rest remaining-blocks))))))))
-
-(swap-with-first-nil-in-block [0 0 nil nil nil 1 1 1 nil nil nil 2 nil nil nil 3 3 3 nil 4 4 nil 5 5 5 5 nil 6 6 6 6 nil 7 7 7 nil 8 8 8 8 9 9])
-
 
 (defn solve2 [input]
   (->> input
@@ -141,3 +144,6 @@
 
 (solve2 sample-input)
 (solve2 (slurp "resources/day09/input.txt"))
+
+(comment
+  (swap-with-first-nil-in-block [0 0 nil nil nil 1 1 1 nil nil nil 2 nil nil nil 3 3 3 nil 4 4 nil 5 5 5 5 nil 6 6 6 6 nil 7 7 7 nil 8 8 8 8 9 9]))
