@@ -25,7 +25,6 @@
           :when (zero? (get-in parsed-input [row col]))]
       [row col])))
 
-(find-zeros sample-input)
 
 (defn find-all-neighbors [input row col]
   (let [parsed-input (parse-input input)
@@ -47,9 +46,6 @@
            :value right}]
          (filter (fn [{:keys [value]}] (some? value))))))
 
-(find-all-neighbors sample-input 0 0)
-
-(get-in (parse-input sample-input) [-1 0])
 
 ;; graph is a map of nodes with their coordinates, value, and next-coords
 ;; {[4 3] {:coord [4 3], :value 7, :next-coords ([5 3] [4 4])},
@@ -79,8 +75,12 @@
        (filter #(= 9 (:value %)))
        count))
 
-(calculate-score sample-input 0 2)
-(count-paths (calculate-score sample-input 0 2))
+(comment
+  (find-zeros sample-input)
+  (find-all-neighbors sample-input 0 0)
+  (get-in (parse-input sample-input) [-1 0])
+  (calculate-score sample-input 0 2)
+  (count-paths (calculate-score sample-input 0 2)))
 
 (defn solve1 [input]
   (let [zeros (find-zeros input)]
@@ -105,15 +105,6 @@
                                  (:next-coords node))))))]
     (find-paths start-coord #{})))
 
-(def anthother-sample-input "012345
-123456
-234567
-345678
-416789
-567891")
-
-(count-paths-combination (calculate-score anthother-sample-input 0 0) [0 0])
-
 (defn solve2 [input]
   (let [zeros (find-zeros input)]
     (->> zeros
@@ -124,3 +115,13 @@
 
 (solve2 sample-input)
 (solve2 (slurp "resources/day10/input.txt"))
+
+(def anthother-sample-input "012345
+123456
+234567
+345678
+416789
+567891")
+
+(comment
+  (count-paths-combination (calculate-score anthother-sample-input 0 0) [0 0]))
