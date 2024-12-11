@@ -34,22 +34,51 @@
 
 (defn solve1 [input max-count]
   (let [parsed-input (parse-input input)]
-    (loop [parsed-input parsed-input
+    (loop [num-freqs (frequencies parsed-input)
            c 0
-           result []]
+           count-result (count parsed-input)
+           seen-states {}]
       (if (= max-count c)
-        (count result)
-        (let [after-blink (->> parsed-input
-                               (map blink-flatten)
-                               (apply concat))]
-          (recur after-blink
+        count-result
+        (let [next-state (reduce-kv
+                          (fn [acc n freq]
+                            (if-let [state (get seen-states n)]
+                              (let [cached-freqs (:nums-after-cycle state)]
+                                (-> acc
+                                    (update :freqs
+                                            (fn [current-freqs]
+                                              (reduce-kv
+                                               (fn [m k v]
+                                                 (update m k (fnil + 0) (* freq v)))
+                                               current-freqs
+                                               cached-freqs)))
+                                    (update :count + (* freq (:count-increment state)))))
+                              (let [blinked (blink n)
+                                    count-increment (dec (count blinked))
+                                    blink-freqs (frequencies blinked)]
+                                (-> acc
+                                    (update :freqs
+                                            (fn [current-freqs]
+                                              (reduce-kv
+                                               (fn [m k v]
+                                                 (update m k (fnil + 0) (* freq v)))
+                                               current-freqs
+                                               blink-freqs)))
+                                    (update :count + (* freq count-increment))
+                                    (update :seen assoc n
+                                            {:nums-after-cycle blink-freqs
+                                             :count-increment count-increment})))))
+                          {:freqs {} :seen seen-states :count count-result}
+                          num-freqs)]
+          (recur (:freqs next-state)
                  (inc c)
-                 after-blink))))))
-
-
+                 (:count next-state)
+                 (:seen next-state)))))))
 
 (solve1 "125 17" 25)
-(solve1 "6 11 33023 4134 564 0 8922422 688775" 25)
+(solve1 "125 17" 35)
+(solve1 "125 17" 40)
+(solve1 "6 11 33023 4134 564 0 8922422 688775" 75)
 
 (comment
 
