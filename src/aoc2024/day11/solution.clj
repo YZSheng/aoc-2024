@@ -7,17 +7,11 @@
   (->> (str/split input #" ")
        (map #(Integer/parseInt %))))
 
-(parse-input sample-input)
-
-
 (defn split-number [num]
   (let [s (str num)
         mid (/ (count s) 2)]
     [(Integer/parseInt (subs s 0 mid))
      (Integer/parseInt (subs s mid))]))
-
-(split-number 1234)
-(split-number 253000)
 
 (defn blink [num]
   (cond
@@ -28,54 +22,23 @@
 
     :else [(* 2024 num)]))
 
-
-(defn blink-flatten [num]
-  (concat (blink num)))
-
-(defn frequency-updater [freq cached-freqs]
-  (fn [current-freqs]
-    (reduce-kv
-     (fn [m k v]
-       (update m k (fnil + 0) (* freq v)))
-     current-freqs
-     cached-freqs)))
-
-(defn get-next-state [seen-states num-freqs count-result]
-  (reduce-kv
-   (fn [acc n freq]
-     (if-let [state (get seen-states n)]
-       (let [cached-freqs (:nums-after-cycle state)]
-         (-> acc
-             (update :freqs
-                     (frequency-updater freq cached-freqs))
-             (update :count + (* freq (:count-increment state)))))
-       (let [blinked (blink n)
-             count-increment (dec (count blinked))
-             blink-freqs (frequencies blinked)]
-         (-> acc
-             (update :freqs
-                     (frequency-updater freq blink-freqs))
-             (update :count + (* freq count-increment))
-             (update :seen assoc n
-                     {:nums-after-cycle blink-freqs
-                      :count-increment count-increment})))))
-   {:freqs {} :seen seen-states :count count-result}
-   num-freqs))
-
-
 (defn solve1 [input max-count]
   (let [parsed-input (parse-input input)]
     (loop [num-freqs (frequencies parsed-input)
-           c 0
-           count-result (count parsed-input)
-           seen-states {}]
+           c 0]
       (if (= max-count c)
-        count-result
-        (let [next-state (get-next-state seen-states num-freqs count-result)]
-          (recur (:freqs next-state)
-                 (inc c)
-                 (:count next-state)
-                 (:seen next-state)))))))
+        (reduce + (vals num-freqs))
+        (let [next-freqs (reduce-kv
+                          (fn [acc n freq]
+                            (let [blinked (blink n)]
+                              (reduce-kv
+                               (fn [m k v]
+                                 (update m k (fnil + 0) (* freq v)))
+                               acc
+                               (frequencies blinked))))
+                          {}
+                          num-freqs)]
+          (recur next-freqs (inc c)))))))
 
 (solve1 "125 17" 25)
 (solve1 "125 17" 35)
@@ -86,9 +49,8 @@
 
   (parse-input sample-input)
 
-  (->> (parse-input sample-input)
-       (map blink-flatten)
-       (apply concat))
+  (split-number 1234)
+  (split-number 253000)
 
   (str 12)
   (count "1234"))
