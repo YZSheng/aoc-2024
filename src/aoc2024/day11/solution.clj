@@ -22,22 +22,25 @@
 
     :else [(* 2024 num)]))
 
+(defn get-next-freqs [num-freqs]
+  (reduce-kv
+   (fn [acc n freq]
+     (let [blinked (blink n)]
+       (reduce-kv
+        (fn [m k v]
+          (update m k (fnil + 0) (* freq v)))
+        acc
+        (frequencies blinked))))
+   {}
+   num-freqs))
+
 (defn solve1 [input max-count]
   (let [parsed-input (parse-input input)]
     (loop [num-freqs (frequencies parsed-input)
            c 0]
       (if (= max-count c)
         (reduce + (vals num-freqs))
-        (let [next-freqs (reduce-kv
-                          (fn [acc n freq]
-                            (let [blinked (blink n)]
-                              (reduce-kv
-                               (fn [m k v]
-                                 (update m k (fnil + 0) (* freq v)))
-                               acc
-                               (frequencies blinked))))
-                          {}
-                          num-freqs)]
+        (let [next-freqs (get-next-freqs num-freqs)]
           (recur next-freqs (inc c)))))))
 
 (solve1 "125 17" 25)
