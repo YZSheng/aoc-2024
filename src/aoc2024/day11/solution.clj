@@ -32,6 +32,37 @@
 (defn blink-flatten [num]
   (concat (blink num)))
 
+(defn frequency-updater [freq cached-freqs]
+  (fn [current-freqs]
+    (reduce-kv
+     (fn [m k v]
+       (update m k (fnil + 0) (* freq v)))
+     current-freqs
+     cached-freqs)))
+
+(defn get-next-state [seen-states num-freqs count-result]
+  (reduce-kv
+   (fn [acc n freq]
+     (if-let [state (get seen-states n)]
+       (let [cached-freqs (:nums-after-cycle state)]
+         (-> acc
+             (update :freqs
+                     (frequency-updater freq cached-freqs))
+             (update :count + (* freq (:count-increment state)))))
+       (let [blinked (blink n)
+             count-increment (dec (count blinked))
+             blink-freqs (frequencies blinked)]
+         (-> acc
+             (update :freqs
+                     (frequency-updater freq blink-freqs))
+             (update :count + (* freq count-increment))
+             (update :seen assoc n
+                     {:nums-after-cycle blink-freqs
+                      :count-increment count-increment})))))
+   {:freqs {} :seen seen-states :count count-result}
+   num-freqs))
+
+
 (defn solve1 [input max-count]
   (let [parsed-input (parse-input input)]
     (loop [num-freqs (frequencies parsed-input)
@@ -40,36 +71,7 @@
            seen-states {}]
       (if (= max-count c)
         count-result
-        (let [next-state (reduce-kv
-                          (fn [acc n freq]
-                            (if-let [state (get seen-states n)]
-                              (let [cached-freqs (:nums-after-cycle state)]
-                                (-> acc
-                                    (update :freqs
-                                            (fn [current-freqs]
-                                              (reduce-kv
-                                               (fn [m k v]
-                                                 (update m k (fnil + 0) (* freq v)))
-                                               current-freqs
-                                               cached-freqs)))
-                                    (update :count + (* freq (:count-increment state)))))
-                              (let [blinked (blink n)
-                                    count-increment (dec (count blinked))
-                                    blink-freqs (frequencies blinked)]
-                                (-> acc
-                                    (update :freqs
-                                            (fn [current-freqs]
-                                              (reduce-kv
-                                               (fn [m k v]
-                                                 (update m k (fnil + 0) (* freq v)))
-                                               current-freqs
-                                               blink-freqs)))
-                                    (update :count + (* freq count-increment))
-                                    (update :seen assoc n
-                                            {:nums-after-cycle blink-freqs
-                                             :count-increment count-increment})))))
-                          {:freqs {} :seen seen-states :count count-result}
-                          num-freqs)]
+        (let [next-state (get-next-state seen-states num-freqs count-result)]
           (recur (:freqs next-state)
                  (inc c)
                  (:count next-state)
