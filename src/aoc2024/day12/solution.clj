@@ -59,6 +59,21 @@ MMMISSJEEE")
 (calculate-connected-area sample-input [3 0])
 (calculate-connected-area sample-input-large [0 0])
 
+
+(defn find-area-coords [parsed-input [x y]]
+  (loop [to-visit #{[x y]}
+         area-visited #{}]
+    (if (empty? to-visit)
+      area-visited
+      (let [current (first to-visit)
+            char (get-in parsed-input current)
+            neighbors (get-neighbors parsed-input (first current) (second current))
+            neighbors-with-char (filter #(= (:char %) char) neighbors)
+            neighbor-coords (map :coords neighbors-with-char)
+            unvisited-neighbors (remove area-visited neighbor-coords)]
+        (recur (into (disj to-visit current) unvisited-neighbors)
+               (conj area-visited current))))))
+
 (defn find-connected-areas [input]
   (let [parsed-input (parse-input input)
         height (count parsed-input)
@@ -69,30 +84,15 @@ MMMISSJEEE")
            areas []]
       (cond
         (>= x height) areas
-
         (>= y width) (recur (inc x) 0 visited areas)
-
         (visited [x y]) (recur x (inc y) visited areas)
-
-        :else (let [area-coords (loop [to-visit #{[x y]}
-                                       area-visited #{}]
-                                  (if (empty? to-visit)
-                                    area-visited
-                                    (let [current (first to-visit)
-                                          char (get-in parsed-input current)
-                                          neighbors (get-neighbors parsed-input (first current) (second current))
-                                          neighbors-with-char (filter #(= (:char %) char) neighbors)
-                                          neighbor-coords (map :coords neighbors-with-char)
-                                          unvisited-neighbors (remove area-visited neighbor-coords)]
-                                      (recur (into (disj to-visit current) unvisited-neighbors)
-                                             (conj area-visited current)))))]
+        :else (let [area-coords (find-area-coords parsed-input [x y])]
                 (recur x
                        (inc y)
                        (into visited area-coords)
                        (conj areas area-coords)))))))
 
 (find-connected-areas sample-input)
-
 
 (defn calculate-perimeter [area-coords]
   (let [coords (set area-coords)]
