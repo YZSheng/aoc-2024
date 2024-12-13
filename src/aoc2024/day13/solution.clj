@@ -37,20 +37,21 @@ Prize: X=18641, Y=10279")
   (let [[a-delta-x a-delta-y] a
         [b-delta-x b-delta-y] b
         [target-x target-y] target]
-    (->> (for [a-count (range 0 max)
-               b-count (range 0 max)
-               :let [x-result (+ (* a-count a-delta-x)
-                                 (* b-count b-delta-x))
-                     y-result (+ (* a-count a-delta-y)
-                                 (* b-count b-delta-y))]
-               :when (and (= x-result target-x)
-                          (= y-result target-y))]
-           [a-count b-count]))))
+    (first (for [a-count (range 0 max)
+                 b-count (range 0 max)
+                 :let [x-result (+ (* a-count a-delta-x)
+                                   (* b-count b-delta-x))
+                       y-result (+ (* a-count a-delta-y)
+                                   (* b-count b-delta-y))]
+                 :when (and (= x-result target-x)
+                            (= y-result target-y))]
+             [a-count b-count]))))
 
-(find-a-b-combinations [94 34] [22 67] [8400 5400] 100)
-(find-a-b-combinations [26 66] [67 21] [12748 12176] 100)
-(find-a-b-combinations [17 86] [84 37] [7870 6450] 100)
-(find-a-b-combinations [69 23] [27 71] [18641 10279] 100)
+(comment
+  (find-a-b-combinations [94 34] [22 67] [8400 5400] 100)
+  (find-a-b-combinations [26 66] [67 21] [12748 12176] 100)
+  (find-a-b-combinations [17 86] [84 37] [7870 6450] 100)
+  (find-a-b-combinations [69 23] [27 71] [18641 10279] 100))
 
 (defn calculate-token-count [a-count b-count]
   (+ (* a-count 3) b-count))
@@ -62,16 +63,13 @@ Prize: X=18641, Y=10279")
        (partition 3)
        (map parse-line)))
 
-(parse-input sample-input)
-
 (defn solve1 [input]
   (->> input
        parse-input
        (map parse-line)
        (map (fn [{:keys [a b target]}]
               (find-a-b-combinations a b target 100)))
-       (filter not-empty)
-       (map first)
+       (filter some?)
        (map (fn [[a-count b-count]]
               (calculate-token-count a-count b-count)))
        (reduce +)))
@@ -89,9 +87,6 @@ Prize: X=18641, Y=10279")
                :b b
                :target (mapv (fn [x] (+ x 10000000000000)) target)}))))
 
-(convert-input sample-input)
-
-(quot 100 3)
 
 (defn find-a-b-combinations-large-target [a b target]
   (let [[a-delta-x a-delta-y] a
@@ -107,12 +102,11 @@ Prize: X=18641, Y=10279")
            (integer? y))
       [x y])))
 
-(find-a-b-combinations-large-target [94 34] [22 67] [10000000008400 10000000005400])
-(find-a-b-combinations-large-target [26 66] [67 21] [10000000012748 10000000012176])
-(find-a-b-combinations-large-target [17 86] [84 37] [10000000007870 10000000006450])
-(find-a-b-combinations-large-target [69 23] [27 71] [10000000018641 10000000010279])
-
-(convert-input sample-input)
+(comment
+  (find-a-b-combinations-large-target [26 66] [67 21] [10000000012748 10000000012176])
+  (find-a-b-combinations-large-target [17 86] [84 37] [10000000007870 10000000006450])
+  (find-a-b-combinations-large-target [69 23] [27 71] [10000000018641 10000000010279])
+  (convert-input sample-input))
 
 (defn solve2 [input]
   (->> input
