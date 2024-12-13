@@ -31,8 +31,6 @@ Prize: X=18641, Y=10279")
                           :b [b-delta-x b-delta-y]
                           :target [target-x target-y]}))))
 
-(parse-line ["Button A: X+94, Y+34" "Button B: X+22, Y+67" "Prize: X=8400, Y=5400"])
-
 (defn find-a-b-combinations [a b target max]
   (let [[a-delta-x a-delta-y] a
         [b-delta-x b-delta-y] b
@@ -48,6 +46,7 @@ Prize: X=18641, Y=10279")
              [a-count b-count]))))
 
 (comment
+  (parse-line ["Button A: X+94, Y+34" "Button B: X+22, Y+67" "Prize: X=8400, Y=5400"])
   (find-a-b-combinations [94 34] [22 67] [8400 5400] 100)
   (find-a-b-combinations [26 66] [67 21] [12748 12176] 100)
   (find-a-b-combinations [17 86] [84 37] [7870 6450] 100)
@@ -86,7 +85,6 @@ Prize: X=18641, Y=10279")
               {:a a
                :b b
                :target (mapv (fn [x] (+ x 10000000000000)) target)}))))
-
 
 (defn find-a-b-combinations-large-target [a b target]
   (let [[a-delta-x a-delta-y] a
