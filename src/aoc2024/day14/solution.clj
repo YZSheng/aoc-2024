@@ -22,19 +22,34 @@ p=9,5 v=-3,-3")
 
 (parse-input sample-input)
 
-(defn move-once [robots max-x max-y]
-  (map (fn [robot]
-         (let [new-x (mod (+ (first (:position robot)) (first (:velocity robot))) max-x)
-               new-y (mod (+ (last (:position robot)) (last (:velocity robot))) max-y)]
-           (assoc robot :position [new-x new-y])))
-       robots))
+(defn print-positions [positions max-x max-y]
+  (let [position-set (set positions)]
+    (doseq [y (range (inc max-y))]
+      (doseq [x (range (inc max-x))]
+        (print (if (position-set [x y]) "#" " ")))
+      (println))))
 
-(defn move-n-times [robots n max-x max-y]
+(print-positions [[3 1] [5 0] [9 5] [4 6] [1 3] [1 5] [6 3] [2 5] [0 6] [6 5] [4 1] [6 2]] 11 7)
+
+(defn move-once [robots max-x max-y n]
+  (let [result (map (fn [robot]
+                      (let [new-x (mod (+ (first (:position robot)) (first (:velocity robot))) max-x)
+                            new-y (mod (+ (last (:position robot)) (last (:velocity robot))) max-y)]
+                        (assoc robot :position [new-x new-y])))
+                    robots)]
+    (when (or (= (mod (- n 134) 103) 0)  ; First pattern: 134, 237, 340, ...
+              (= (mod (- n 173) 101) 0))  ; Second pattern: 173, 274, 375, ...
+      (println "\n\n\n\n\nRuns : " n)
+      (print-positions (map :position result) max-x max-y))
+    result))
+
+(defn move-n-times [robots n-times max-x max-y]
   (loop [robots robots
-         n n]
+         n n-times]
     (if (zero? n)
       robots
-      (recur (move-once robots max-x max-y) (dec n)))))
+      (do
+        (recur (move-once robots max-x max-y (inc (- n-times n))) (dec n))))))
 
 (move-n-times (parse-input "p=2,4 v=2,-3") 4 11 7)
 
@@ -66,7 +81,7 @@ p=9,5 v=-3,-3")
 
 (->> sample-input
      (parse-input)
-     ((fn [robots] (move-n-times robots 100 11 7)))
+     ((fn [robots] (move-n-times robots 1 11 7)))
      (map :position)
      ((fn [positions] (group-by-quadrant positions 11 7)))
      (vals)
@@ -80,13 +95,17 @@ p=9,5 v=-3,-3")
      (vals)
      (apply *))
 
-(defn solve1 [input max-x max-y]
+(defn solve1 [input max-x max-y max-count]
   (->> input
        (parse-input)
-       ((fn [robots] (move-n-times robots 100 max-x max-y)))
+       ((fn [robots] (move-n-times robots max-count max-x max-y)))
        (map :position)
        ((fn [positions] (group-by-quadrant positions max-x max-y)))
        (vals)
        (apply *)))
 
-(solve1 (slurp "resources/day14/input.txt") 101 103)
+
+(solve1 (slurp "resources/day14/input.txt") 101 103 100)
+;; part 2
+(solve1 (slurp "resources/day14/input.txt") 101 103 10000)
+
