@@ -20,7 +20,6 @@ p=9,5 v=-3,-3")
        (map #(map (fn [s] (Integer/parseInt s)) %))
        (map (fn [[x y vx vy]] {:position [x y] :velocity [vx vy]}))))
 
-(parse-input sample-input)
 
 (defn print-positions [positions max-x max-y]
   (let [position-set (set positions)]
@@ -29,7 +28,6 @@ p=9,5 v=-3,-3")
         (print (if (position-set [x y]) "#" " ")))
       (println))))
 
-(print-positions [[3 1] [5 0] [9 5] [4 6] [1 3] [1 5] [6 3] [2 5] [0 6] [6 5] [4 1] [6 2]] 11 7)
 
 (defn move-once [robots max-x max-y n]
   (let [result (map (fn [robot]
@@ -48,14 +46,7 @@ p=9,5 v=-3,-3")
          n n-times]
     (if (zero? n)
       robots
-      (do
-        (recur (move-once robots max-x max-y (inc (- n-times n))) (dec n))))))
-
-(move-n-times (parse-input "p=2,4 v=2,-3") 4 11 7)
-
-
-(map :position (move-n-times (parse-input sample-input) 100 11 7))
-
+      (recur (move-once robots max-x max-y (inc (- n-times n))) (dec n)))))
 
 (defn group-by-quadrant [positions width height]
   (let [mid-x (quot width 2)
@@ -74,26 +65,30 @@ p=9,5 v=-3,-3")
      :bottom-right (count (get quadrants :bottom-right []))}))
 
 (comment
+  (parse-input sample-input)
+  (print-positions [[3 1] [5 0] [9 5] [4 6] [1 3] [1 5] [6 3] [2 5] [0 6] [6 5] [4 1] [6 2]] 11 7)
   (group-by-quadrant [[3 5] [5 4] [9 0] [4 5] [1 6] [1 3] [6 0]
                       [2 3] [0 2] [6 0] [4 5] [6 6]] 11 7)
   ;; => {:top-left 1, :top-right 3, :bottom-left 4, :bottom-right 1}
-  )
+  (move-n-times (parse-input "p=2,4 v=2,-3") 4 11 7)
 
-(->> sample-input
-     (parse-input)
-     ((fn [robots] (move-n-times robots 1 11 7)))
-     (map :position)
-     ((fn [positions] (group-by-quadrant positions 11 7)))
-     (vals)
-     (apply *))
+  (map :position (move-n-times (parse-input sample-input) 100 11 7))
 
-(->> (slurp "resources/day14/input.txt")
-     (parse-input)
-     ((fn [robots] (move-n-times robots 100 101 103)))
-     (map :position)
-     ((fn [positions] (group-by-quadrant positions 101 103)))
-     (vals)
-     (apply *))
+  (->> sample-input
+       (parse-input)
+       ((fn [robots] (move-n-times robots 1 11 7)))
+       (map :position)
+       ((fn [positions] (group-by-quadrant positions 11 7)))
+       (vals)
+       (apply *))
+
+  (->> (slurp "resources/day14/input.txt")
+       (parse-input)
+       ((fn [robots] (move-n-times robots 100 101 103)))
+       (map :position)
+       ((fn [positions] (group-by-quadrant positions 101 103)))
+       (vals)
+       (apply *)))
 
 (defn solve1 [input max-x max-y max-count]
   (->> input
@@ -104,8 +99,6 @@ p=9,5 v=-3,-3")
        (vals)
        (apply *)))
 
-
 (solve1 (slurp "resources/day14/input.txt") 101 103 100)
 ;; part 2
 (solve1 (slurp "resources/day14/input.txt") 101 103 10000)
-
