@@ -20,14 +20,12 @@ p=9,5 v=-3,-3")
        (map #(map (fn [s] (Integer/parseInt s)) %))
        (map (fn [[x y vx vy]] {:position [x y] :velocity [vx vy]}))))
 
-
 (defn print-positions [positions max-x max-y]
   (let [position-set (set positions)]
     (doseq [y (range (inc max-y))]
       (doseq [x (range (inc max-x))]
         (print (if (position-set [x y]) "#" " ")))
       (println))))
-
 
 (defn move-once [robots max-x max-y n]
   (let [result (map (fn [robot]
