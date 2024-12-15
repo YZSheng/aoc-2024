@@ -54,10 +54,10 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
                   [\# \# \# \# \# \# \# \# \# \#]])
 
 (defn find-robot [m]
-  (for [row (range (count m))
-        cell (range (count (first m)))
-        :when (= (get-in m [row cell]) \@)]
-    [row cell]))
+  (first (for [row (range (count m))
+               cell (range (count (first m)))
+               :when (= (get-in m [row cell]) \@)]
+           [row cell])))
 
 (comment
 
@@ -163,9 +163,9 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
         result (reduce (fn [{:keys [m pos]} direction]
                          (let [new-m (move-robot m pos direction)]
                            {:m new-m
-                            :pos (first (find-robot new-m))}))
+                            :pos (find-robot new-m)}))
                        {:m parsed-map
-                        :pos (first (find-robot parsed-map))}
+                        :pos (find-robot parsed-map)}
                        parsed-movement)
         boxes (find-boxes (:m result))]
     (->> boxes
@@ -271,7 +271,7 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
 
   (find-robot scaled-part-2-sample-map)
 
-  (get-connected-rocks-with-double-space-blocks scaled-part-2-sample-map (first (find-robot scaled-part-2-sample-map)) "<")
+  (get-connected-rocks-with-double-space-blocks scaled-part-2-sample-map (find-robot scaled-part-2-sample-map) "<")
 
   (def part-2-connected-blocks-map [[\# \# \# \# \# \# \# \# \# \# \# \# \# \#]
                                     [\# \# \. \. \. \. \. \. \# \# \. \. \# \#]
@@ -377,14 +377,12 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
   (let [parsed (parse-input input)
         parsed-map (scale-map (:map parsed))
         parsed-movement (:movement parsed)
-        initial-pos (first (find-robot parsed-map))
+        initial-pos (find-robot parsed-map)
         result (reduce (fn [{:keys [m pos]} direction]
-                         (if (nil? pos)
-                           {:m m :pos (first (find-robot m))}
-                           (let [new-m (move-robot-connected-blocks m pos direction)
-                                 new-pos (first (find-robot new-m))]
-                             {:m new-m
-                              :pos new-pos})))
+                         (let [new-m (move-robot-connected-blocks m pos direction)
+                               new-pos (find-robot new-m)]
+                           {:m new-m
+                            :pos new-pos}))
                        {:m parsed-map
                         :pos initial-pos}
                        parsed-movement)
