@@ -360,18 +360,18 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
 
       :else m)))
 
-(move-robot-connected-blocks part-2-connected-complex-blocks-map [5 7] "^")
-scaled-part-2-sample-map
-(find-robot scaled-part-2-sample-map)
-(move-robot-connected-blocks scaled-part-2-sample-map [3 10] "<")
-
 (defn find-boxes-left-bracket [m]
   (for [row (range (count m))
         cell (range (count (first m)))
         :when (= (get-in m [row cell]) \[)]
     [row cell]))
 
-(find-boxes-left-bracket part-2-connected-complex-blocks-map)
+(comment
+  (find-boxes-left-bracket part-2-connected-complex-blocks-map)
+  (move-robot-connected-blocks part-2-connected-complex-blocks-map [5 7] "^")
+  scaled-part-2-sample-map
+  (find-robot scaled-part-2-sample-map)
+  (move-robot-connected-blocks scaled-part-2-sample-map [3 10] "<"))
 
 (defn solve2 [input]
   (let [parsed (parse-input input)
