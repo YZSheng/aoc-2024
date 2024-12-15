@@ -108,8 +108,8 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
       (= next-cell \O)
       (if-let [rocks (get-connected-rocks m next-pos direction)]
         (-> m
-            (assoc-in robot-pos \.)
-            (as-> m' (reduce #(assoc-in %1 %2 \.) m' rocks))
+            (assoc-in robot-pos \.) ; set robot position to .
+            (as-> m' (reduce #(assoc-in %1 %2 \.) m' rocks)) ; set rocks to .
             (as-> m' (reduce #(assoc-in %1
                                         (case direction
                                           "v" (update %2 0 inc)
@@ -118,8 +118,8 @@ v^^>>><<^^<>>^v^<v^vv<>v^<<>^<^v^v><^<<<><<^<v><v<>vv>>v><v^<vv<>v^<<^")
                                           ">" (update %2 1 inc))
                                         \O)
                              m'
-                             rocks))
-            (assoc-in next-pos \@))
+                             rocks)) ; move \O to the new position
+            (assoc-in next-pos \@)) ; update robot new position
         m))))
 
 (comment
