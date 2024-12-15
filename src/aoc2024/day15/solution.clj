@@ -195,3 +195,117 @@ small-sample-input
 (solve1 small-sample-input)
 (solve1 sample-input)
 (solve1 (slurp "resources/day15/input.txt"))
+
+;; part 2
+
+(parse-input "#######
+#...#.#
+#.....#
+#..OO@#
+#..O..#
+#.....#
+#######
+
+<vv<<^^<<^^")
+
+(def part-2-sample-map  [[\# \# \# \# \# \# \#]
+                         [\# \. \. \. \# \. \#]
+                         [\# \. \. \. \. \. \#]
+                         [\# \. \. \O \O \@ \#]
+                         [\# \. \. \O \. \. \#]
+                         [\# \. \. \. \. \. \#]
+                         [\# \# \# \# \# \# \#]])
+
+part-2-sample-map
+
+(defn scale-map [m]
+  (mapv (fn [row] (vec (mapcat (fn [cell]
+                                 (case cell
+                                   \@ [\@ \.]
+                                   \. [\. \.]
+                                   \# [\# \#]
+                                   \O [\[ \]])) row))) m))
+
+(def scaled-part-2-sample-map (scale-map part-2-sample-map))
+
+scaled-part-2-sample-map
+
+(defn get-connected-rocks-with-double-space-blocks [m pos direction]
+  (let [is-block? #(contains? #{\[ \]} %)
+        next-pos (case direction
+                  "v" (update pos 0 inc)
+                  "^" (update pos 0 dec)
+                  "<" (update pos 1 dec)
+                  ">" (update pos 1 inc))
+        current-cell (get-in m next-pos)]
+    (when (is-block? current-cell)
+      (let [start-row (first next-pos)
+            start-col (second next-pos)
+            ;; Find all blocks in a given row that are horizontally connected
+            find-row-blocks (fn [row col]
+                            (loop [current-col col
+                                  blocks #{[row col]}
+                                  visited #{col}]
+                              (let [left-col (dec current-col)
+                                    right-col (inc current-col)
+                                    left-cell (get-in m [row left-col])
+                                    right-cell (get-in m [row right-col])]
+                                (cond
+                                  (and (not (visited left-col))
+                                       (is-block? left-cell)) (recur left-col 
+                                                                    (conj blocks [row left-col])
+                                                                    (conj visited left-col))
+                                  (and (not (visited right-col))
+                                       (is-block? right-cell)) (recur right-col 
+                                                                     (conj blocks [row right-col])
+                                                                     (conj visited right-col))
+                                  :else blocks))))
+            ;; First find vertically connected blocks
+            initial-blocks (case direction
+                           "^" (let [above-row (dec start-row)]
+                                (if (is-block? (get-in m [above-row start-col]))
+                                  #{[start-row start-col] [above-row start-col]}
+                                  #{[start-row start-col]}))
+                           "v" (let [below-row (inc start-row)]
+                                (if (is-block? (get-in m [below-row start-col]))
+                                  #{[start-row start-col] [below-row start-col]}
+                                  #{[start-row start-col]}))
+                           (">" "<") #{[start-row start-col]})
+            ;; Then find all horizontally connected blocks for each row involved
+            connected-blocks (reduce (fn [acc [row col]]
+                                     (into acc (find-row-blocks row col)))
+                                   #{}
+                                   initial-blocks)]
+        (vec connected-blocks)))))
+
+(find-robot scaled-part-2-sample-map)
+
+scaled-part-2-sample-map
+
+(find-robot scaled-part-2-sample-map)
+
+(get-connected-rocks-with-double-space-blocks scaled-part-2-sample-map (first (find-robot scaled-part-2-sample-map)) "<")
+
+(def part-2-connected-blocks-map [[\# \# \# \# \# \# \# \# \# \# \# \# \# \#]
+                                  [\# \# \. \. \. \. \. \. \# \# \. \. \# \#]
+                                  [\# \# \. \. \. \. \. \. \. \. \. \. \# \#]
+                                  [\# \# \. \. \. \. \[ \] \[ \] \. \. \# \#]
+                                  [\# \# \. \. \. \. \[ \] \. \. \. \. \# \#]
+                                  [\# \# \. \. \. \. \. \@ \. \. \. \. \# \#]
+                                  [\# \# \# \# \# \# \# \# \# \# \# \# \# \#]])
+
+part-2-connected-blocks-map
+(find-robot part-2-connected-blocks-map)
+(get-connected-rocks-with-double-space-blocks part-2-connected-blocks-map [5 7] "^")
+
+(def part-2-connected-complex-blocks-map [[\# \# \# \# \# \# \# \# \# \# \# \# \# \#]
+                                          [\# \# \. \. \. \. \. \. \# \# \. \. \# \#]
+                                          [\# \# \. \. \. \. \. \. \. \. \. \. \# \#]
+                                          [\# \# \. \. \. \[ \] \[ \] \. \. \. \# \#]
+                                          [\# \# \. \. \. \. \[ \] \. \. \. \. \# \#]
+                                          [\# \# \. \. \. \. \. \@ \. \. \. \. \# \#]
+                                          [\# \# \# \# \# \# \# \# \# \# \# \# \# \#]])
+
+part-2-connected-complex-blocks-map
+(find-robot part-2-connected-complex-blocks-map)
+(get-connected-rocks-with-double-space-blocks part-2-connected-complex-blocks-map [5 7] "^")
