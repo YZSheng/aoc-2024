@@ -208,39 +208,47 @@
 
 
 ;; part 2
+
+;; Find all paths in a map, key being the cost, value being the path in positions
+; {9005 [[[2 1] [1 1] [1 2] [2 2] [2 3] [1 3]]], 4003 [[[2 1] [1 1] [1 2] [1 3]]], 2003 [[[2 1] [1 1] [1 2] [1 3]] [[2 1] [2 2] [1 2] [1 3]]], 7005 [[[2 1] [1 1] [1 2] [2 2] [2 3] [1 3]]], 1003 [[[2 1] [2 2] [2 3] [1 3]]]}
 (defn find-paths-2 [parsed-map start-pos end-pos initial-direction]
-  (loop [states [[0 initial-direction start-pos [start-pos]]]
-         visited {}
-         paths {}]
-    (if-let [[cost direction pos path] (first states)]
-      (let [previous-cost (get visited [direction pos])]
-        (cond
-          (and previous-cost (< previous-cost cost))
-          (recur (rest states) visited paths)
+  (let [priority-queue (java.util.PriorityQueue. (comparator (fn [[c1 _ _ _] [c2 _ _ _]] (compare c1 c2))))]
+    (.add priority-queue [0 initial-direction start-pos [start-pos]])
+    (loop [visited {}
+           paths {}]
+      (if-let [[cost direction pos path] (.poll priority-queue)]
+        (let [previous-cost (get visited [direction pos])]
+          (cond
+            (and previous-cost (< previous-cost cost))
+            (recur visited paths)
 
-          (= pos end-pos)
-          (recur (rest states)
-                 (assoc visited [direction pos] cost)
-                 (update paths cost #(conj (or % []) path)))
+            (= pos end-pos)
+            (recur (assoc visited [direction pos] cost)
+                   (update paths cost #(conj (or % []) path)))
 
-          :else
-          (let [forward-pos (get-next-position pos direction)
-                next-states (cond-> []
-                              (valid-move? parsed-map forward-pos)
-                              (conj [(inc cost) direction forward-pos (conj path forward-pos)])
-                              true
-                              (conj [(+ cost 1000) (rotate-left direction) pos path]
-                                    [(+ cost 1000) (rotate-right direction) pos path]))]
-            (recur (concat (rest states) next-states)
-                   (assoc visited [direction pos] cost)
-                   paths))))
-      (count (into #{} cat (val (apply min-key key paths)))))))
+            :else
+            (let [forward-pos (get-next-position pos direction)
+                  next-states (cond-> []
+                                (valid-move? parsed-map forward-pos)
+                                (conj [(inc cost) direction forward-pos (conj path forward-pos)])
+                                true
+                                (conj [(+ cost 1000) (rotate-left direction) pos path]
+                                      [(+ cost 1000) (rotate-right direction) pos path]))]
+              (doseq [state next-states]
+                (.add priority-queue state))
+              (recur (assoc visited [direction pos] cost)
+                     paths))))
+        paths))))
 
 (defn solve2 [input]
   (let [parsed (vec (parse-input input))
         start-pos (first (find-reindeer-position input))
         end-pos (first (find-end-position input))]
-    (find-paths-2 parsed start-pos end-pos :east)))
+    (->> (find-paths-2 parsed start-pos end-pos :east)
+         (apply min-key key)
+         (val)
+         (into #{} cat)
+         (count))))
 
 
 (solve2 "#####
