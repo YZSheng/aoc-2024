@@ -71,29 +71,34 @@
        (< -1 y (count (first parsed-map)))
        (not= \# (get-in parsed-map [x y]))))
 
+(defn get-new-moves [next-moves visited unvisited]
+  (into {}
+        (for [[k v] next-moves
+              :when (not (visited k))
+              :let [existing (get unvisited k)]
+              :when (or (nil? existing)
+                        (< (:cost v) (:cost existing)))]
+          [k v])))
+
 (defn find-paths [parsed-map start-pos end-pos initial-direction]
   (let [initial-state {:pos start-pos
                        :direction initial-direction
                        :cost 0
                        :path []}]
-    (loop [unvisited {[start-pos initial-direction] initial-state}  ; map of [pos direction] -> state
+    (loop [unvisited {[start-pos initial-direction] initial-state}
            visited #{}
            current-state initial-state]
       (let [{:keys [pos direction cost path]} current-state]
 
         (cond
-          ;; Found the end
           (= pos end-pos)
           [path]
 
-          ;; No more positions to visit
           (empty? unvisited)
           []
 
           :else
-          ;; Generate all possible next moves
-          (let [;; Try moving forward
-                forward-pos (get-next-position pos direction)
+          (let [forward-pos (get-next-position pos direction)
                 forward-move (when (valid-move? parsed-map forward-pos)
                                {[forward-pos direction]
                                 {:pos forward-pos
@@ -101,7 +106,6 @@
                                  :cost (+ cost 1)
                                  :path (conj path :forward)}})
 
-                ;; Try rotating left
                 left-dir (rotate-left direction)
                 left-move {[pos left-dir]
                            {:pos pos
@@ -109,7 +113,6 @@
                             :cost (+ cost 1000)
                             :path (conj path :rotate-left)}}
 
-                ;; Try rotating right
                 right-dir (rotate-right direction)
                 right-move {[pos right-dir]
                             {:pos pos
@@ -117,24 +120,12 @@
                              :cost (+ cost 1000)
                              :path (conj path :rotate-right)}}
 
-                ;; Combine all possible moves
                 next-moves (merge forward-move left-move right-move)
-
-                ;; Filter out visited positions and update costs if better path found
-                new-moves (into {}
-                                (for [[k v] next-moves
-                                      :when (not (visited k))
-                                      :let [existing (get unvisited k)]
-                                      :when (or (nil? existing)
-                                                (< (:cost v) (:cost existing)))]
-                                  [k v]))
-
-                ;; Update unvisited with new moves
+                new-moves (get-new-moves next-moves visited unvisited)
                 updated-unvisited (-> unvisited
                                       (dissoc [pos direction])
                                       (merge new-moves))
 
-                ;; Find next position to visit (lowest cost)
                 next-state (apply min-key
                                   #(:cost (val %))
                                   updated-unvisited)]
@@ -214,3 +205,132 @@
 #################")
 
 (solve1 (slurp "resources/day16/input.txt"))
+
+
+;; part 2
+(defn find-paths-2 [parsed-map start-pos end-pos initial-direction]
+  (let [initial-state {:pos start-pos
+                       :direction initial-direction
+                       :cost 0
+                       :path []}]
+    (loop [unvisited {[start-pos initial-direction] initial-state} 
+           visited #{}
+           paths []
+           min-cost Integer/MAX_VALUE]
+      (if (empty? unvisited)
+        paths
+        (let [[current-key current-state] (apply min-key #(:cost (val %)) unvisited)
+              {:keys [pos direction cost path]} current-state]
+          (cond
+            (and (= pos end-pos) (<= cost min-cost))
+            (if (= cost min-cost)
+              (recur (dissoc unvisited current-key)
+                     (conj visited current-key)
+                     (conj paths path)
+                     min-cost)
+              (recur (dissoc unvisited current-key)
+                     (conj visited current-key)
+                     [path]
+                     cost))
+
+            (or (> cost min-cost) (visited current-key))
+            (recur (dissoc unvisited current-key)
+                   visited
+                   paths
+                   min-cost)
+
+            :else
+            (let [forward-pos (get-next-position pos direction)
+                  forward-move (when (valid-move? parsed-map forward-pos)
+                                {[forward-pos direction]
+                                 {:pos forward-pos
+                                  :direction direction
+                                  :cost (+ cost 1)
+                                  :path (conj path {:move :forward :position forward-pos})}})
+
+                  left-dir (rotate-left direction)
+                  left-move {[pos left-dir]
+                            {:pos pos
+                             :direction left-dir
+                             :cost (+ cost 1000)
+                             :path (conj path {:move :rotate-left :position pos})}}
+
+                  right-dir (rotate-right direction)
+                  right-move {[pos right-dir]
+                             {:pos pos
+                              :direction right-dir
+                              :cost (+ cost 1000)
+                              :path (conj path {:move :rotate-right :position pos})}}
+
+                  next-moves (merge forward-move left-move right-move)
+                  new-moves (get-new-moves next-moves visited unvisited)
+                  updated-unvisited (-> unvisited
+                                      (dissoc current-key)
+                                      (merge new-moves))]
+
+              (recur updated-unvisited
+                     (conj visited current-key)
+                     paths
+                     min-cost))))))))
+
+(defn find-all-moves-2 [input]
+  (let [parsed (vec (parse-input input))
+        start-pos (first (find-reindeer-position input))
+        end-pos (first (find-end-position input))]
+    (find-paths-2 parsed start-pos end-pos :east)))
+
+
+(find-all-moves-2 "####
+#..#
+#SE#
+####")
+
+(find-all-moves-2 "####
+#.E#
+#S.#
+####")
+
+(find-all-moves-2 "####
+#.E#
+#S##
+####")
+
+(find-all-moves-2 "#####
+#..E#
+#S..#
+#####")
+
+(count (find-all-moves-2 sample-input))
+
+(defn solve2 [input]
+  (->> input
+       (find-all-moves-2)
+       first
+       :visited
+       (count)
+       (+ 1)))
+
+(solve2 "#####
+#..E#
+#S..#
+#####")
+
+(solve2 "#################
+#...#...#...#..E#
+#.#.#.#.#.#.#.#.#
+#.#.#.#...#...#.#
+#.#.#.#.###.#.#.#
+#...#.#.#.....#.#
+#.#.#.#.#.#####.#
+#.#...#.#.#.....#
+#.#.#####.#.###.#
+#.#.#.......#...#
+#.#.###.#####.###
+#.#.#...#.....#.#
+#.#.#.#####.###.#
+#.#.#.........#.#
+#.#.#.#########.#
+#S#.............#
+#################")
+
+(solve2 (slurp "resources/day16/input.txt"))
