@@ -119,7 +119,7 @@
 (process-instructions {:A 117440 :B 0 :C 0} [0 3 5 4 3 0])
 
 (defn solve2 [result]
-  (let [rprogram (reverse result)]
+  (let [reversed-result (reverse result)]
     (loop [power (- (count result) 1)
            open  #{(- (bit-shift-left 1 (* 3 (count result))) 1)}]
       (if (< power 0)
@@ -132,7 +132,7 @@
                                                   last
                                                   reverse)]
                                :when (= (take (- (count result) power) output)
-                                        (take (- (count result) power) rprogram))]
+                                        (take (- (count result) power) reversed-result))]
                            i)) open))))))
 
 (solve2 [0 3 5 4 3 0])
