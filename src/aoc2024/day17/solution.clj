@@ -1,4 +1,6 @@
-(ns aoc2024.day17.solution)
+(ns aoc2024.day17.solution 
+  (:require
+   [clojure.string :as str]))
 
 ;; Combo operands 0 through 3 represent literal values 0 through 3.
 ;; Combo operand 4 represents the value of register A.
@@ -114,6 +116,13 @@
 
   (process-instructions {:A 729 :B 0 :C 0} [0 1 5 4 3 0])
   (process-instructions {:A 64854237 :B 0 :C 0} [2 4 1 1 7 5 1 5 4 0 5 5 0 3 3 0]))
+
+(defn solve1 [a-value program]
+  (let [result (process-instructions {:A a-value :B 0 :C 0} program)]
+    (str/join "," (last result))))
+
+(solve1 729 [0 1 5 4 3 0])
+(solve1 64854237 [2 4 1 1 7 5 1 5 4 0 5 5 0 3 3 0])
 
 ;; part 2
 (process-instructions {:A 117440 :B 0 :C 0} [0 3 5 4 3 0])
