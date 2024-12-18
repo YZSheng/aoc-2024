@@ -44,29 +44,37 @@
                    (<= 0 ny max-y)))
             [[(dec x) y] [(inc x) y] [x (dec y)] [x (inc y)]])))
 
-(defn find-shortest-path [from to occupied-positions max-x max-y]
-  (let [queue (atom clojure.lang.PersistentQueue/EMPTY)
-        visited (atom #{from})
-        parent (atom {from nil})]
-    (swap! queue conj from)
-    (loop []
-      (when (seq @queue)
-        (let [current (peek @queue)]
-          (swap! queue pop)
-          (if (= current to)
-            (loop [path [] node to]
-              (if node
-                (recur (conj path node) (@parent node))
-                (reverse path)))
-            (do
-              (doseq [neighbor (get-neighbors current max-x max-y)]
-                (when (and (not (contains? @visited neighbor))
-                           (not (contains? occupied-positions neighbor)))
-                  (swap! visited conj neighbor)
-                  (swap! parent assoc neighbor current)
-                  (swap! queue conj neighbor)))
-              (recur))))))))
+(defn initialize-state [from]
+  {:queue (atom (conj clojure.lang.PersistentQueue/EMPTY from))
+   :visited (atom #{from})
+   :parent (atom {from nil})})
 
+(defn reconstruct-path [parent to]
+  (loop [path []
+         node to]
+    (if node
+      (recur (conj path node) (@parent node))
+      (reverse path))))
+
+(defn process-neighbors [current state occupied-positions max-x max-y]
+  (doseq [neighbor (get-neighbors current max-x max-y)]
+    (when (and (not (contains? @(:visited state) neighbor))
+               (not (contains? occupied-positions neighbor)))
+      (swap! (:visited state) conj neighbor)
+      (swap! (:parent state) assoc neighbor current)
+      (swap! (:queue state) conj neighbor))))
+
+(defn find-shortest-path [from to occupied-positions max-x max-y]
+  (let [state (initialize-state from)]
+    (loop []
+      (when (seq @(:queue state))
+        (let [current (peek @(:queue state))]
+          (swap! (:queue state) pop)
+          (if (= current to)
+            (reconstruct-path (:parent state) to)
+            (do
+              (process-neighbors current state occupied-positions max-x max-y)
+              (recur))))))))
 
 (defn solve1 [input n max-x max-y]
   (let [parsed (parse-input input)
@@ -85,18 +93,19 @@
   (solve1 sample-input 12 6 6)
   (solve1 (slurp "resources/day18/input.txt") 1024 70 70))
 
-
 ;; part 2
+
+(defn path-blocked [parsed max-x max-y i]
+  (nil? (find-shortest-path [0 0]
+                            [max-x max-y]
+                            (set (take i parsed))
+                            max-x max-y)))
 
 (defn solve2 [input max-x max-y]
   (let [parsed (parse-input input)
         max-attempts 10000]
     (->> (range max-attempts)
-         (filter (fn [i]
-                   (nil? (find-shortest-path [0 0]
-                                             [max-x max-y]
-                                             (set (take i parsed))
-                                             max-x max-y))))
+         (filter (partial path-blocked parsed max-x max-y))
          first
          dec
          (nth parsed))))
