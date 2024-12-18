@@ -69,7 +69,11 @@
 
 
 (defn solve1 [input n max-x max-y]
-  (dec (count (find-shortest-path [0 0] [max-x max-y] (set (take n (parse-input input))) max-x max-y))))
+  (let [parsed (parse-input input)
+        blocked (set (take n parsed))]
+    (->> (find-shortest-path [0 0] [max-x max-y] blocked max-x max-y)
+         count
+         dec)))
 
 (comment
   (def occupied-positions #{[1 1] [2 2] [3 3]})
