@@ -18,38 +18,38 @@ bbrgwb")
     {:towels (mapv str/trim (str/split towels #","))
      :targets (str/split-lines targets)}))
 
-(parse-input sample-input)
 
 (defn contains-substring? [s substr]
   (str/includes? s substr))
 
-(contains-substring? "brwrr" "br1")
 
 (defn remove-single-substring [target towel]
   (str/replace-first target towel ""))
-
-(remove-single-substring "brwrr" "br")
-(remove-single-substring "brbrwrr" "br")
-(remove-single-substring "brbrwrr" "br123")
 
 (defn can-make-target? [towels target]
   (if (empty? target)
     true
     (some (fn [towel]
             (when (.startsWith target towel)
-              (can-make-target? 
-                towels
-                (subs target (count towel))))) 
+              (can-make-target?
+               towels
+               (subs target (count towel)))))
           towels)))
 
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "brwrr")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "ubwu")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bggr")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "rrbgbr")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bwurrg")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bbrgwb")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "brgr")
-(can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bwurrg")
+(comment
+  (parse-input sample-input)
+  (contains-substring? "brwrr" "br1")
+  (remove-single-substring "brwrr" "br")
+  (remove-single-substring "brbrwrr" "br")
+  (remove-single-substring "brbrwrr" "br123")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "brwrr")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "ubwu")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bggr")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "rrbgbr")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bwurrg")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bbrgwb")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "brgr")
+  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bwurrg"))
 
 (defn solve1 [input]
   (let [parsed (parse-input input)
@@ -58,9 +58,27 @@ bbrgwb")
     (count (filter #(can-make-target? towels %) targets))))
 
 (solve1 sample-input)
-
 (solve1 (slurp "resources/day19/input.txt"))
 
-(count (:targets (parse-input (slurp "resources/day19/input.txt"))))
+(def count-towel-combinations
+  (memoize
+   (fn [towels target]
+     (if (empty? target)
+       1
+       (->> towels
+            (keep (fn [towel]
+                    (when (.startsWith target towel)
+                      (let [remaining (subs target (count towel))]
+                        (count-towel-combinations towels remaining)))))
+            (reduce + 0))))))
 
+(defn solve2 [input]
+  (let [parsed (parse-input input)
+        towels (:towels parsed)
+        targets (:targets parsed)]
+    (->> targets
+         (map #(count-towel-combinations towels %))
+         (reduce +))))
 
+(solve2 sample-input)
+(solve2 (slurp "resources/day19/input.txt"))
