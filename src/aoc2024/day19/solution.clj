@@ -1,7 +1,6 @@
 (ns aoc2024.day19.solution
   (:require [clojure.string :as str]))
 
-
 (def sample-input "r, wr, b, g, bwu, rb, gb, br
 
 brwrr
@@ -18,10 +17,8 @@ bbrgwb")
     {:towels (mapv str/trim (str/split towels #","))
      :targets (str/split-lines targets)}))
 
-
 (defn contains-substring? [s substr]
   (str/includes? s substr))
-
 
 (defn remove-single-substring [target towel]
   (str/replace-first target towel ""))
