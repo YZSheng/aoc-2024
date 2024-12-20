@@ -17,57 +17,35 @@ bbrgwb")
     {:towels (mapv str/trim (str/split towels #","))
      :targets (str/split-lines targets)}))
 
-(defn contains-substring? [s substr]
-  (str/includes? s substr))
-
-(defn remove-single-substring [target towel]
-  (str/replace-first target towel ""))
-
-(defn can-make-target? [towels target]
-  (if (empty? target)
-    true
-    (some (fn [towel]
-            (when (.startsWith target towel)
-              (can-make-target?
-               towels
-               (subs target (count towel)))))
-          towels)))
-
-(comment
-  (parse-input sample-input)
-  (contains-substring? "brwrr" "br1")
-  (remove-single-substring "brwrr" "br")
-  (remove-single-substring "brbrwrr" "br")
-  (remove-single-substring "brbrwrr" "br123")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "brwrr")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "ubwu")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bggr")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "rrbgbr")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bwurrg")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bbrgwb")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "brgr")
-  (can-make-target? ["r" "wr" "b" "g" "bwu" "rb" "gb" "br"] "bwurrg"))
+(defn count-towel-combinations [towels target]
+  (let [n (count target)
+        dp (long-array (inc n))]
+    ; initialize dp array with 0 apart from the first element empty string
+    (dotimes [i (inc n)]
+      (aset dp i (long 0)))
+    (aset dp 0 (long 1))
+    ; start building dp array where dp[i] represents the number of ways to construct the first i characters of the target using towels
+    (doseq [i (range n)]
+      (when (pos? (aget dp i))
+        (let [remaining (subs target i)
+              current-count (aget dp i)]
+          (doseq [towel towels
+                  :let [len (count towel)]
+                  :when (and
+                         (<= (+ i len) n)
+                         (.startsWith remaining towel))]
+            (aset dp (+ i len)
+                  (+ (aget dp (+ i len)) current-count))))))
+    (aget dp n)))
 
 (defn solve1 [input]
   (let [parsed (parse-input input)
         towels (:towels parsed)
         targets (:targets parsed)]
-    (count (filter #(can-make-target? towels %) targets))))
-
-(solve1 sample-input)
-(solve1 (slurp "resources/day19/input.txt"))
-
-(def count-towel-combinations
-  (memoize
-   (fn [towels target]
-     (if (empty? target)
-       1
-       (->> towels
-            (keep (fn [towel]
-                    (when (.startsWith target towel)
-                      (let [remaining (subs target (count towel))]
-                        (count-towel-combinations towels remaining)))))
-            (reduce + 0))))))
+    (->> targets
+         (map #(count-towel-combinations towels %))
+         (filter pos?)
+         (count))))
 
 (defn solve2 [input]
   (let [parsed (parse-input input)
@@ -77,5 +55,8 @@ bbrgwb")
          (map #(count-towel-combinations towels %))
          (reduce +))))
 
-(solve2 sample-input)
-(solve2 (slurp "resources/day19/input.txt"))
+(comment
+  (solve1 sample-input)
+  (solve1 (slurp "resources/day19/input.txt"))
+  (solve2 sample-input)
+  (solve2 (slurp "resources/day19/input.txt")))
