@@ -122,76 +122,49 @@
 
 ;; part 2
 
-(defn get-neighbors [max-x max-y parsed-map x y]
-  (for [[dx dy] [[-1 0] [1 0] [0 -1] [0 1]]
-        :let [nx (+ x dx)
-              ny (+ y dy)]
-        :when (and (< nx max-x) (>= nx 0)
-                   (< ny max-y) (>= ny 0)
-                   (not= \# (get-in parsed-map [ny nx])))]
-    [[nx ny] 1]))
+(defn find-path-from-distances [parsed-map distances]
+  (let [end (find-end parsed-map)
+        start (find-start parsed-map)
+        dirs [[-1 0] [1 0] [0 -1] [0 1]]]
+    (loop [current end
+           path [end]]
+      (if (= current start)
+        (reverse path)
+        (let [current-dist (distances current)
+              next-pos (first
+                        (for [[dx dy] dirs
+                              :let [nx (+ (first current) dx)
+                                    ny (+ (second current) dy)
+                                    next-pos [nx ny]]
+                              :when (and (distances next-pos)
+                                         (= (distances next-pos)
+                                            (dec current-dist)))]
+                          next-pos))]
+          (recur next-pos (conj path next-pos)))))))
 
-(defn build-graph [parsed-map]
-  (let [max-y (count parsed-map)
-        max-x (count (first parsed-map))]
-    (into {}
-          (for [y (range 1 (dec max-y))
-                x (range 1 (dec max-x))
-                :when (not= \# (get-in parsed-map [y x]))
-                :let [neighbors (into {} (get-neighbors max-x max-y parsed-map x y))]]
-            [[x y] neighbors]))))
+(defn manhattan-distance [[x1 y1] [x2 y2]]
+  (+ (abs (- x2 x1)) (abs (- y2 y1))))
 
-(defn dijkstra [graph start]
-  (loop [distances {start 0}
-         queue (sorted-set [0 start])]
-    (if (empty? queue)
-      distances
-      (let [[curr-dist curr-pos] (first queue)
-            queue (disj queue [curr-dist curr-pos])
-            neighbors (get graph curr-pos)]
-        (if (nil? neighbors)
-          (recur distances queue)
-          (let [updates (for [[next-pos edge-weight] neighbors
-                              :let [new-dist (+ curr-dist edge-weight)]
-                              :when (or (not (distances next-pos))
-                                        (< new-dist (distances next-pos)))]
-                          [next-pos new-dist])
-                new-distances (into distances updates)
-                new-queue (into queue (map (fn [[pos dist]] [dist pos]) updates))]
-            (recur new-distances new-queue)))))))
-
-(defn create-distance-map [parsed-map distances]
-  (let [max-x (count parsed-map)
-        max-y (count (first parsed-map))]
-    (vec (for [y (range max-x)]
-           (vec (for [x (range max-y)]
-                  (if (= \# (get-in parsed-map [y x]))
-                    Double/POSITIVE_INFINITY
-                    (get distances [x y] Double/POSITIVE_INFINITY))))))))
+(defn calculate-distance-from-end [path]
+  (into {} (map-indexed (fn [idx pos] [pos (- (count path) idx 1)]) path)))
 
 (defn solve2 [input min-saving]
   (let [parsed-map (parse-input input)
-        max-x (count parsed-map)
-        max-y (count (first parsed-map))
-        [end-x end-y] (find-end parsed-map)
-        graph (build-graph parsed-map)
-        distances (dijkstra graph [end-x end-y])
-        path-distance-map (create-distance-map parsed-map distances)
+        distances (calculate-distances parsed-map)
+        path (find-path-from-distances parsed-map distances)
+        path-distances (calculate-distance-from-end path)
         max-steps 20]
-    (->> (for [x (range 1 (dec max-x))
-               y (range 1 (dec max-y))
-               :let [d (get-in path-distance-map [x y])]
-               :when (not= d Double/POSITIVE_INFINITY)
-               x2 (range (max 0 (- x max-steps))
-                         (inc (min (dec max-x) (+ x max-steps))))
-               y2 (range (max 0 (- y (- max-steps (abs (- x x2)))))
-                         (inc (min (dec max-y) (+ y (- max-steps (abs (- x x2)))))))
-               :let [change-distance (get-in path-distance-map [x2 y2])
-                     manhattan-distance (+ (abs (- x x2)) (abs (- y y2)))]
-               :when (and (not= change-distance Double/POSITIVE_INFINITY)
-                          (>= (- d change-distance manhattan-distance) min-saving))]
-           [x y x2 y2])
+    (->> (for [pos path
+               other-pos path
+               :let [pos-dist (path-distances pos)
+                     other-dist (path-distances other-pos)
+                     md (manhattan-distance pos other-pos)]
+               :when (and (< other-dist pos-dist)
+                          (<= md max-steps)
+                          (>= (- pos-dist (+ other-dist md)) min-saving))]
+           [pos other-pos])
          count)))
 
 (solve2 sample-input 76)
+(solve2 sample-input 74)
 (solve2 (slurp "resources/day20/input.txt") 100)
