@@ -124,3 +124,120 @@
 685A
 879A
 826A")
+
+;; part 2
+
+(def bfs-directions
+  {\^ [0 -1]
+   \> [1 0]
+   \v [0 1]
+   \< [-1 0]})
+
+(def keypad
+  {\7 [0 0] \8 [1 0] \9 [2 0]
+   \4 [0 1] \5 [1 1] \6 [2 1]
+   \1 [0 2] \2 [1 2] \3 [2 2]
+   \X [0 3] \0 [1 3] \A [2 3]})
+
+(def directions
+  {\X [0 0]
+   \^ [1 0]
+   \A [2 0]
+   \< [0 1]
+   \v [1 1]
+   \> [2 1]})
+
+(defn valid-position? [input pos]
+  (and (>= (first pos) 0)
+       (>= (second pos) 0)
+       (<= (first pos) 2)
+       (<= (second pos) 3)
+       (not= pos (get input \X))
+       (some #(= pos (second %)) input)))
+
+(defn valid-path? [input start-pos path]
+  (loop [pos start-pos
+         moves (butlast (seq path))]  ; Remove the A
+    (if (empty? moves)
+      true
+      (let [dir (first moves)
+            [dx dy] (get bfs-directions dir)
+            new-pos [(+ (first pos) dx) (+ (second pos) dy)]]
+        (if (valid-position? input new-pos)
+          (recur new-pos (rest moves))
+          false)))))
+
+(defn get-command [input start end]
+  (if (= start end)
+    ["A"]
+    (let [start-pos (get input start)
+          end-pos (get input end)
+          dx (- (first end-pos) (first start-pos))
+          dy (- (second end-pos) (second start-pos))
+          ;; Generate direct paths based on dx and dy
+          horizontal-first (str
+                          (apply str (repeat (abs dx) (if (pos? dx) \> \<)))
+                          (apply str (repeat (abs dy) (if (pos? dy) \v \^)))
+                          "A")
+          vertical-first (str
+                        (apply str (repeat (abs dy) (if (pos? dy) \v \^)))
+                        (apply str (repeat (abs dx) (if (pos? dx) \> \<)))
+                        "A")
+          paths (cond-> []
+                 (valid-path? input start-pos horizontal-first) (conj horizontal-first)
+                 (valid-path? input start-pos vertical-first) (conj vertical-first))]
+      (if (seq paths)
+        (sort-by count paths)
+        ["A"]))))
+        
+
+(def get-key-presses
+  (memoize
+   (fn [input code robot memo]
+     (let [key (str code "," robot)]
+       (if-let [cached (get memo key)]
+         cached
+         (let [result 
+               (loop [current \A
+                      chars (seq code)
+                      length 0]
+                 (if (empty? chars)
+                   length
+                   (let [next-char (first chars)
+                         moves (get-command input current next-char)
+                         move-length (if (zero? robot)
+                                     (count (first moves))
+                                     (let [sub-lengths (keep #(get-key-presses directions % (dec robot) memo)
+                                                          moves)]
+                                       (if (seq sub-lengths)
+                                         (apply min sub-lengths)
+                                         1)))]
+                     (recur next-char
+                            (rest chars)
+                            (+ length move-length)))))]
+           result))))))
+
+(defn min-commands-to-reach [n target-sequence]
+  (get-key-presses keypad target-sequence n {}))
+
+(min-commands-to-reach 2 "029A")
+(min-commands-to-reach 2 "980A")
+(min-commands-to-reach 2 "179A")
+(min-commands-to-reach 2 "456A")
+(min-commands-to-reach 2 "379A")
+
+(defn solve2 [inputs]
+  (->> inputs
+       str/split-lines
+       (map (fn [input]
+              (let [result (min-commands-to-reach 25 input)
+                    num (Integer/parseInt (str/replace input #"\D" ""))]
+                (println input result num)
+                (* num result))))
+       (apply +)))
+
+(solve2 "208A
+540A
+685A
+879A
+826A")
