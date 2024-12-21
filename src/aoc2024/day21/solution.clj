@@ -176,49 +176,44 @@
           dy (- (second end-pos) (second start-pos))
           ;; Generate direct paths based on dx and dy
           horizontal-first (str
-                          (apply str (repeat (abs dx) (if (pos? dx) \> \<)))
-                          (apply str (repeat (abs dy) (if (pos? dy) \v \^)))
-                          "A")
+                            (apply str (repeat (abs dx) (if (pos? dx) \> \<)))
+                            (apply str (repeat (abs dy) (if (pos? dy) \v \^)))
+                            "A")
           vertical-first (str
-                        (apply str (repeat (abs dy) (if (pos? dy) \v \^)))
-                        (apply str (repeat (abs dx) (if (pos? dx) \> \<)))
-                        "A")
+                          (apply str (repeat (abs dy) (if (pos? dy) \v \^)))
+                          (apply str (repeat (abs dx) (if (pos? dx) \> \<)))
+                          "A")
           paths (cond-> []
-                 (valid-path? input start-pos horizontal-first) (conj horizontal-first)
-                 (valid-path? input start-pos vertical-first) (conj vertical-first))]
+                  (valid-path? input start-pos horizontal-first) (conj horizontal-first)
+                  (valid-path? input start-pos vertical-first) (conj vertical-first))]
       (if (seq paths)
         (sort-by count paths)
         ["A"]))))
-        
 
 (def get-key-presses
   (memoize
-   (fn [input code robot memo]
-     (let [key (str code "," robot)]
-       (if-let [cached (get memo key)]
-         cached
-         (let [result 
-               (loop [current \A
-                      chars (seq code)
-                      length 0]
-                 (if (empty? chars)
-                   length
-                   (let [next-char (first chars)
-                         moves (get-command input current next-char)
-                         move-length (if (zero? robot)
-                                     (count (first moves))
-                                     (let [sub-lengths (keep #(get-key-presses directions % (dec robot) memo)
-                                                          moves)]
-                                       (if (seq sub-lengths)
-                                         (apply min sub-lengths)
-                                         1)))]
-                     (recur next-char
-                            (rest chars)
-                            (+ length move-length)))))]
-           result))))))
+   (fn [input code robot]
+     (let [result
+           (loop [current \A
+                  chars (seq code)
+                  length 0]
+             (if (empty? chars)
+               length
+               (let [next-char (first chars)
+                     moves (get-command input current next-char)
+                     move-length (if (zero? robot)
+                                   (count (first moves))
+                                   (let [sub-lengths (keep #(get-key-presses directions % (dec robot)) moves)]
+                                     (if (seq sub-lengths)
+                                       (apply min sub-lengths)
+                                       1)))]
+                 (recur next-char
+                        (rest chars)
+                        (+ length move-length)))))]
+       result))))
 
 (defn min-commands-to-reach [n target-sequence]
-  (get-key-presses keypad target-sequence n {}))
+  (get-key-presses keypad target-sequence n))
 
 (min-commands-to-reach 2 "029A")
 (min-commands-to-reach 2 "980A")
@@ -232,7 +227,6 @@
        (map (fn [input]
               (let [result (min-commands-to-reach 25 input)
                     num (Integer/parseInt (str/replace input #"\D" ""))]
-                (println input result num)
                 (* num result))))
        (apply +)))
 
