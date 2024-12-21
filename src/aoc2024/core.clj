@@ -52,3 +52,38 @@
             (do
               (process-neighbors current state occupied-positions max-x max-y)
               (recur))))))))
+
+(defn collect-all-paths [paths-atom parent-paths current]
+  (swap! paths-atom update current
+         (fnil into #{})
+         (map #(conj % current) parent-paths)))
+
+(defn find-all-shortest-paths [from to occupied-positions max-x max-y]
+  (let [state {:queue (atom (conj clojure.lang.PersistentQueue/EMPTY from))
+               :visited (atom #{from})
+               :parent (atom {})
+               :paths (atom {from #{[from]}})
+               :min-depth (atom Integer/MAX_VALUE)}]
+    (loop [depth 0]
+      (if (seq @(:queue state))
+        (let [level-size (count @(:queue state))
+              current-depth depth]
+          (doseq [_ (range level-size)]
+            (let [current (peek @(:queue state))]
+              (swap! (:queue state) pop)
+              (if (= current to)
+                (reset! (:min-depth state) current-depth)
+                (when (<= current-depth @(:min-depth state))
+                  (doseq [neighbor (get-neighbors current max-x max-y)]
+                    (when (and (not (contains? occupied-positions neighbor))
+                               (<= (inc current-depth) @(:min-depth state)))
+                      (when-not (contains? @(:visited state) neighbor)
+                        (swap! (:queue state) conj neighbor)
+                        (swap! (:visited state) conj neighbor))
+                      (collect-all-paths (:paths state)
+                                         (@(:paths state) current)
+                                         neighbor)))))))
+          (recur (inc depth)))
+        ;; Return all paths that reach the target with minimum length
+        (filter #(= (count %) (inc @(:min-depth state)))
+                (@(:paths state) to))))))
