@@ -193,24 +193,22 @@
 (def get-key-presses
   (memoize
    (fn [input code robot]
-     (let [result
-           (loop [current \A
-                  chars (seq code)
-                  length 0]
-             (if (empty? chars)
-               length
-               (let [next-char (first chars)
-                     moves (get-command input current next-char)
-                     move-length (if (zero? robot)
-                                   (count (first moves))
-                                   (let [sub-lengths (keep #(get-key-presses directions % (dec robot)) moves)]
-                                     (if (seq sub-lengths)
-                                       (apply min sub-lengths)
-                                       1)))]
-                 (recur next-char
-                        (rest chars)
-                        (+ length move-length)))))]
-       result))))
+     (loop [current \A
+            chars (seq code)
+            length 0]
+       (if (empty? chars)
+         length
+         (let [next-char (first chars)
+               moves (get-command input current next-char)
+               move-length (if (zero? robot)
+                             (count (first moves))
+                             (let [sub-lengths (keep #(get-key-presses directions % (dec robot)) moves)]
+                               (if (seq sub-lengths)
+                                 (apply min sub-lengths)
+                                 1)))]
+           (recur next-char
+                  (rest chars)
+                  (+ length move-length))))))))
 
 (defn min-commands-to-reach [n target-sequence]
   (get-key-presses keypad target-sequence n))
