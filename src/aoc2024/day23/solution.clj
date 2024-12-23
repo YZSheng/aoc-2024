@@ -45,25 +45,24 @@ td-yn")
 
 (defn build-graph [parsed]
   (reduce (fn [acc edge-set]
-            (let [[a b] (seq edge-set)] 
+            (let [[a b] (seq edge-set)]
               (-> acc
                   (update a (fnil conj #{}) b)
                   (update b (fnil conj #{}) a))))
           {}
           parsed))
 
-(build-graph (parse-input sample-input))
 
 (defn find-three-connected [input]
   (let [parsed (parse-input input)
         graph (build-graph parsed)]
     (->> graph
          (mapcat (fn [[node neighbors]]
-           (for [n1 neighbors
-                 n2 neighbors
-                 :when (and (not= n1 n2)
-                           (contains? (get graph n1) n2))]
-             (hash-set node n1 n2))))
+                   (for [n1 neighbors
+                         n2 neighbors
+                         :when (and (not= n1 n2)
+                                    (contains? (get graph n1) n2))]
+                     (hash-set node n1 n2))))
          distinct)))
 
 (find-three-connected sample-input)
@@ -78,3 +77,43 @@ td-yn")
 (solve1 sample-input)
 
 (solve1 (slurp "resources/day23/input.txt"))
+
+;; part 2
+
+(build-graph (parse-input sample-input))
+
+(defn get-neighbors [graph node]
+  (get graph node #{}))
+
+(defn bron-kerbosch
+  ([graph] (bron-kerbosch graph #{} (set (keys graph)) #{}))
+  ([graph r p x]
+   (if (and (empty? p) (empty? x))
+     [r]
+     (let [pivot (first (or (seq p) (seq x)))
+           pivot-neighbors (if pivot (get-neighbors graph pivot) #{})
+           candidates (if pivot
+                        (set/difference p pivot-neighbors)
+                        p)]
+       (->> candidates
+            (mapcat (fn [v]
+                      (let [v-neighbors (get-neighbors graph v)]
+                        (bron-kerbosch graph
+                                       (conj r v)
+                                       (set/intersection p v-neighbors)
+                                       (set/intersection x v-neighbors)))))
+            (filter some?)
+            vec)))))
+
+(defn solve2 [input]
+  (let [parsed (parse-input input)
+        graph (build-graph parsed)]
+    (->> (bron-kerbosch graph)
+         (sort-by count >)
+         (first)
+         (sort)
+         (str/join ","))))
+
+(solve2 sample-input)
+
+(solve2 (slurp "resources/day23/input.txt"))
