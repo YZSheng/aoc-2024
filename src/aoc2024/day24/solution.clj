@@ -167,8 +167,8 @@ tnw OR pbm -> gnj
       (and sum-gate (not= (last sum-gate) zn))
       [(last sum-gate) zn]
 
-      ;; no carry-out or and-xor-carry
-      (not (or sum-gate and-xor-carry carry-out))
+      ;; no sum-gate or carry-out or and-xor-carry
+      (not (or sum-gate carry-out and-xor-carry))
       [(last and-gate) (last xor-gate)])))
 
 (defn solve2 [input]
