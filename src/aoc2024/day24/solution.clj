@@ -45,10 +45,10 @@ x02 OR y02 -> z02
           [(into {} (map (fn [wire]
                            (let [[wire-name wire-value] (str/split wire #": ")]
                              [wire-name (parse-long wire-value)])) (str/split-lines wires)))
-           (map (fn [instruction]
-                  (let [[inputs output] (str/split instruction #" -> ")
-                        [input1 op input2] (str/split inputs #" ")]
-                    [op input1 input2 output])) (str/split-lines instructions))]))))
+           (mapv (fn [instruction]
+                   (let [[inputs output] (str/split instruction #" -> ")
+                         [input1 op input2] (str/split inputs #" ")]
+                     [op input1 input2 output])) (str/split-lines instructions))]))))
 
 (parse-input sample-input-simple)
 
@@ -134,3 +134,51 @@ tnw OR pbm -> gnj
 
 (solve1 sample-input-large)
 (solve1 (slurp "resources/day24/input.txt"))
+
+;; part 2
+;; https://www.gsnetwork.com/wp-content/uploads/2023/01/full-adder-xor-gate-circuit-diagram.jpg
+(defn detect-swap [instructions i]
+  (let [xn (format "x%02d" i)
+        yn (format "y%02d" i)
+        zn (format "z%02d" i)
+        and-gate (first (filter #(and (= (first %) "AND")
+                                      (#{xn yn} (second %))
+                                      (#{xn yn} (nth % 2)))
+                                instructions))
+        xor-gate (first (filter #(and (= (first %) "XOR")
+                                      (#{xn yn} (second %))
+                                      (#{xn yn} (nth % 2)))
+                                instructions))
+        sum-gate (first (filter #(and (= (first %) "XOR")
+                                      (or (= (second %) (last xor-gate))
+                                          (= (nth % 2) (last xor-gate))))
+                                instructions))
+        and-xor-carry (first (filter #(and (= (first %) "AND")
+                                           (or (= (second %) (last xor-gate))
+                                               (= (nth % 2) (last xor-gate))))
+                                     instructions))
+        carry-out (when (and and-gate and-xor-carry)
+                    (first (filter #(and (= (first %) "OR")
+                                         (= #{(second %) (nth % 2)}
+                                            #{(last and-gate) (last and-xor-carry)}))
+                                   instructions)))]
+    (cond
+      ;; sum-gate is not output to the correct z-bit
+      (and sum-gate (not= (last sum-gate) zn))
+      [(last sum-gate) zn]
+
+      ;; no carry-out or and-xor-carry
+      (not (or sum-gate and-xor-carry carry-out))
+      [(last and-gate) (last xor-gate)])))
+
+(defn solve2 [input]
+  (let [[_ instructions] (parse-input input)
+        n (count (filter #(str/starts-with? (last %) "z") instructions))
+        swaps (->> (range 1 (dec n))
+                   (keep #(detect-swap instructions %)))]
+    (->> swaps
+         (apply concat)
+         sort
+         (str/join ","))))
+
+(solve2 (slurp "resources/day24/input.txt"))
