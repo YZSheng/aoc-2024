@@ -87,3 +87,6 @@
         ;; Return all paths that reach the target with minimum length
         (filter #(= (count %) (inc @(:min-depth state)))
                 (@(:paths state) to))))))
+
+(defn transpose [matrix]
+  (apply mapv vector matrix))
