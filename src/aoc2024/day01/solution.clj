@@ -1,6 +1,6 @@
 (ns aoc2024.day01.solution
   (:require
-   [aoc2024.core :refer [read-lines]]
+   [aoc2024.core :refer [read-lines transpose]]
    [clojure.string :as str]))
 
 (def sample-input "3   4
@@ -11,9 +11,6 @@
 3   3")
 
 (def input (str/split-lines sample-input))
-
-(defn transpose [m]
-  (apply mapv vector m))
 
 (defn solve [input]
   (->> input
